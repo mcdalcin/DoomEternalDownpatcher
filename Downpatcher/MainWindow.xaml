@@ -8,10 +8,10 @@
         Title="DOOM Eternal Steam Downpatcher" Height="350" Width="800">
     <Canvas>
         <Border BorderThickness="1" BorderBrush="#FF727272" Canvas.Left="10" Canvas.Top="10">
-            <TextBlock Name="tbRootPath" TextTrimming="WordEllipsis" Width="400" Height="30" />
+            <TextBlock Name="tbRootPath" TextTrimming="WordEllipsis" Width="400" Height="20" Padding="5,1,0,0" />
         </Border>
         <Border BorderThickness="1" BorderBrush="#FF727272" Padding="2,0,5,0" Canvas.Left="417" Canvas.Top="10">
-            <TextBlock Name="tbVersion" TextTrimming="WordEllipsis" Height="30" Width="200" />
+            <TextBlock Name="tbVersion" TextTrimming="WordEllipsis" Height="20" Width="205" Padding="5,1,0,0" />
         </Border>
     </Canvas>
 </Window>

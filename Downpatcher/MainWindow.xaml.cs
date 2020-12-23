@@ -1,4 +1,5 @@
 ﻿using Microsoft.Win32;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -21,11 +22,18 @@ namespace Downpatcher {
     /// </summary>
     public partial class MainWindow : Window {
 
+        private const string DOOM_ETERNAL_EXE_STRING = "DOOMEternalx64vk.exe";
+        private const string DOOM_ETERNAL_VERSION_URL = "https://raw.githubusercontent.com/mcdalcin/DoomEternalDownpatcher/master/data/versions.json";
+
         private readonly string _doomEternalPath = "";
+        private readonly string _doomEternalDetectedVersion = "";
+
+
 
         public MainWindow() {
             InitializeComponent();
             _doomEternalPath = InitializeDoomRootPath();
+            _doomEternalDetectedVersion = InitializeDoomVersion();
         }
 
         private string InitializeDoomRootPath() {
@@ -54,8 +62,52 @@ namespace Downpatcher {
             }
         }
 
-        private void InitializeDoomVersion() {
-            // Get size of DoomEternal
+        private string InitializeDoomVersion() {
+            // Get size of Doom Eternal exe.
+            string doomEternalExePath = _doomEternalPath + @"\" + DOOM_ETERNAL_EXE_STRING;
+
+            if (!File.Exists(doomEternalExePath)) {
+                return "";
+            }
+
+            long exeSize = new FileInfo(doomEternalExePath).Length;
+            string doomVersion = DetermineDoomVersion(exeSize);
+
+            if (doomVersion.Length != 0) {
+                tbVersion.Inlines.Add(new Bold(new Run("Installed DOOM Eternal version: ")) {
+                    Foreground = Brushes.LimeGreen
+                });
+                tbVersion.Inlines.Add(new Run(doomVersion));
+            } else {
+                tbVersion.Inlines.Add(new Bold(new Run("Unable to determine DOOM Eternal version.")) {
+                    Foreground = Brushes.Red
+                });
+                return "";
+            }
+            return doomVersion;
+        }
+
+        public class Versions {
+            public class Version {
+                public string name;
+                public long size;
+            }
+
+            public Version[] versions;
+        }
+
+        private static string DetermineDoomVersion(long exeSize) {
+            using (var webClient = new System.Net.WebClient()) {
+                var json = webClient.DownloadString(DOOM_ETERNAL_VERSION_URL);
+                Versions versions = JsonConvert.DeserializeObject<Versions>(json);
+                foreach (var version in versions.versions) {
+                    if (version.size == exeSize) {
+                        return version.name;
+                    }
+                }
+            }
+
+            return "";
         }
     }
 }
