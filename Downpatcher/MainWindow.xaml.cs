@@ -1,20 +1,10 @@
 ﻿using Microsoft.Win32;
+using Microsoft.WindowsAPICodePack.Dialogs;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
 using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace Downpatcher {
     /// <summary>
@@ -28,12 +18,25 @@ namespace Downpatcher {
         private readonly string _doomEternalPath = "";
         private readonly string _doomEternalDetectedVersion = "";
 
+        private string _doomEternalDownpatchFolder = "";
 
+        private static Versions _availableVersions;
+
+        private class Versions {
+            public class Version {
+                public string name;
+                public long size;
+            }
+
+            public Version[] versions;
+        }
 
         public MainWindow() {
             InitializeComponent();
             _doomEternalPath = InitializeDoomRootPath();
             _doomEternalDetectedVersion = InitializeDoomVersion();
+            InitializeDoomDownpatchVersions();
+            InitializeDoomDownpatchFolder();
         }
 
         private string InitializeDoomRootPath() {
@@ -74,33 +77,50 @@ namespace Downpatcher {
             string doomVersion = DetermineDoomVersion(exeSize);
 
             if (doomVersion.Length != 0) {
-                tbVersion.Inlines.Add(new Bold(new Run("Installed DOOM Eternal version: ")) {
+                tbVersion.Inlines.Add(new Bold(new Run("Installed DOOM Eternal version: ") {
                     Foreground = Brushes.LimeGreen
-                });
+                }));
                 tbVersion.Inlines.Add(new Run(doomVersion));
             } else {
-                tbVersion.Inlines.Add(new Bold(new Run("Unable to determine DOOM Eternal version.")) {
+                tbVersion.Inlines.Add(new Bold(new Run("Unable to determine DOOM Eternal version.") {
                     Foreground = Brushes.Red
-                });
+                }));
                 return "";
             }
             return doomVersion;
         }
 
-        public class Versions {
-            public class Version {
-                public string name;
-                public long size;
+        private void InitializeDoomDownpatchVersions() {
+            // For now, only include versions less than our current version.
+            foreach(var version in _availableVersions.versions) {
+                if (_doomEternalDetectedVersion.Equals(version.name)) {
+                    break;
+                }
+                cbDownpatchVersion.Items.Add(version.name);
             }
+        }
 
-            public Version[] versions;
+        private void InitializeDoomDownpatchFolder() {
+            // For now, let's use the current folder + DOWNPATCH_FILES.
+            _doomEternalDownpatchFolder = Directory.GetCurrentDirectory() + @"\DOWNPATCH_FILES";
+            lSelectedFolder.Content = new Run(_doomEternalDownpatchFolder);
+        }
+
+        private void SelectFolderButton_Click(object sender, RoutedEventArgs e) {
+            CommonOpenFileDialog selectFolderDialog = new CommonOpenFileDialog() {
+                IsFolderPicker = true
+            };
+            if (selectFolderDialog.ShowDialog() == CommonFileDialogResult.Ok) {
+                _doomEternalDownpatchFolder = selectFolderDialog.FileName;
+                lSelectedFolder.Content = _doomEternalDownpatchFolder;
+            }
         }
 
         private static string DetermineDoomVersion(long exeSize) {
             using (var webClient = new System.Net.WebClient()) {
                 var json = webClient.DownloadString(DOOM_ETERNAL_VERSION_URL);
-                Versions versions = JsonConvert.DeserializeObject<Versions>(json);
-                foreach (var version in versions.versions) {
+                _availableVersions = JsonConvert.DeserializeObject<Versions>(json);
+                foreach (var version in _availableVersions.versions) {
                     if (version.size == exeSize) {
                         return version.name;
                     }
@@ -108,6 +128,10 @@ namespace Downpatcher {
             }
 
             return "";
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e) {
+
         }
     }
 }
