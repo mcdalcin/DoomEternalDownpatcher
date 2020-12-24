@@ -1,5 +1,5 @@
 # DoomEternalDownpatcher
-A Steam downpatcher for DOOM Eternal
+A Downpatcher for DOOM Eternal. Steam only.
 
 In progress.
 
