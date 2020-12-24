@@ -15,21 +15,37 @@
                 <TextBlock Name="tbVersion" />
             </Label>
         </Border>
-        <ComboBox Name="cbDownpatchVersion" Text="Test" Height="22" Canvas.Left="10" Canvas.Top="68" Width="94" >
+        <ComboBox Name="cbDownpatchVersion" SelectionChanged="DownpatchVersionComboBox_SelectionChanged" Text="Test" Height="22" Canvas.Left="10" Canvas.Top="62" Width="94" >
         </ComboBox>
-        <Label Height="20" Canvas.Left="4" Canvas.Top="49" Padding="5,0,0,0">
+        <Label Height="20" Canvas.Left="4" Canvas.Top="43" Padding="5,0,0,0">
             <Bold>
                 <Run Text="Downpatch Version"/>
             </Bold>
         </Label>
-        <Label Height="20" Canvas.Left="4" Canvas.Top="106" Padding="5,0,0,0">
+        <Label Height="20" Canvas.Left="4" Canvas.Top="96" Padding="5,0,0,0">
             <Bold>
                 <Run Text="Downpatch Folder"/>
             </Bold>
         </Label>
         <StackPanel Orientation="Horizontal" Height="20" Canvas.Left="10" Canvas.Top="126">
-            <Label x:Name="lSelectedFolder" BorderThickness="1" BorderBrush="#FF727272" Height="20" Padding="5,0,5,0" Content="Default folder..."/>
-            <Button x:Name="bSelectFolder" Click="SelectFolderButton_Click" Height="20" Content="Select Folder" Margin="5,0,0,0"/>
+            <Label x:Name="lSelectedFolder" BorderThickness="1" BorderBrush="#FF727272" Height="20" Padding="5,0,5,0" Content="Default folder..." Margin="0,-10,0,10"/>
+            <Button x:Name="bSelectFolder" Click="SelectFolderButton_Click" Height="20" Content="Select Folder" Margin="5,-10,0,10"/>
         </StackPanel>
+        <Border BorderThickness="1" BorderBrush="#FF727272" Canvas.Left="10" Canvas.Top="179" Width="595" Height="121">
+            <Grid>
+                <ScrollViewer Name="scroller" Margin="0" Background="Black">
+                    <StackPanel>
+                        <ItemsControl ItemsSource="{Binding ConsoleOutput, Mode=OneWay}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Path=.}" Foreground="White" FontFamily="Consolas" Padding="5,0,0,0"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+        <Button Name="bStartDownpatcher" Canvas.Left="10" Canvas.Top="150" Padding="0" IsEnabled="False">Start Downpatcher</Button>
     </Canvas>
 </Window>
