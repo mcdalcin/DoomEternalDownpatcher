@@ -2,6 +2,7 @@
 using Microsoft.WindowsAPICodePack.Dialogs;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
@@ -20,7 +21,8 @@ namespace Downpatcher {
     public partial class MainWindow : Window {
 
         private const string DOOM_ETERNAL_EXE_STRING = "DOOMEternalx64vk.exe";
-        private const string DOOM_ETERNAL_VERSION_URL = "https://raw.githubusercontent.com/mcdalcin/DoomEternalDownpatcher/master/data/versions.json";
+        private const string DOOM_ETERNAL_DATA_BASE_URL = "https://raw.githubusercontent.com/mcdalcin/DoomEternalDownpatcher/master/data/";
+        private const string DOOM_ETERNAL_VERSION_URL = DOOM_ETERNAL_DATA_BASE_URL + "versions.json";
         private const string DEPOT_DOWNLOADER_LATEST_URL = "https://api.github.com/repos/SteamRE/DepotDownloader/releases/latest";
 
         private readonly string _doomEternalPath = "";
@@ -29,18 +31,9 @@ namespace Downpatcher {
         private string _doomEternalDownpatchFolder = "";
         private string _depotDownloaderInstallPath = "";
 
-        private static Versions _availableVersions;
+        private DoomVersions _availableVersions;
 
         private ConsoleContent console;
-
-        private class Versions {
-            public class Version {
-                public string name;
-                public long size;
-            }
-
-            public Version[] versions;
-        }
 
         public MainWindow() {
             InitializeComponent();
@@ -60,14 +53,14 @@ namespace Downpatcher {
             if (localKey == null) {
                 return "";
             }
-        
+
             string steamPath = localKey.GetValue("InstallPath").ToString();
             string doomEternalPath = steamPath + @"\steamapps\common\DOOMEternal";
 
             // Check that the DOOM Eternal folder exists.
             if (Directory.Exists(doomEternalPath)) {
                 console.Output("Successfully found DOOM Eternal installation folder!");
-                tbRootPath.Inlines.Add(new Bold(new Run("Root folder found: ")) { 
+                tbRootPath.Inlines.Add(new Bold(new Run("Root folder found: ")) {
                     Foreground = Brushes.LimeGreen
                 });
                 tbRootPath.Inlines.Add(new Run(doomEternalPath));
@@ -133,7 +126,7 @@ namespace Downpatcher {
         private void InitializeDoomDownpatchVersions() {
             // For now, only include versions less than our current version.
             int count = 0;
-            foreach(var version in _availableVersions.versions) {
+            foreach (var version in _availableVersions.versions) {
                 if (_doomEternalDetectedVersion.Equals(version.name)) {
                     break;
                 }
@@ -157,30 +150,32 @@ namespace Downpatcher {
                 _doomEternalDownpatchFolder = selectFolderDialog.FileName;
                 lSelectedFolder.Content = _doomEternalDownpatchFolder;
             }
+            UpdateStartDownpatcherButton();
         }
 
-        private void UpdateStartDownpatcherButton_IsEnabled() {
+        private void UpdateStartDownpatcherButton() {
             bStartDownpatcher.IsEnabled =
                 cbDownpatchVersion.SelectedItem.ToString().Length != 0 &&
+                tbUsername.Text.Length != 0 &&
+                pbPassword.Password.Length != 0 &&
                 _doomEternalDetectedVersion.Length != 0 &&
                 _doomEternalDownpatchFolder.Length != 0 &&
                 _depotDownloaderInstallPath.Length != 0;
         }
 
-        private void StartDownpatcherButton_Click(object sender, RoutedEventArgs e) {
-            // Check to make sure a downpatch version and downpatch folder are selected and valid.
-
+        /** Returns the file list for the specified version in an array of strings. */
+        private string[] GetFileList(string versionName) {
+            using (var webClient = new WebClient()) {
+                string files = webClient.DownloadString(DOOM_ETERNAL_DATA_BASE_URL + versionName + ".txt");
+                // Split files on each newline.
+                return files.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            }
         }
 
-        private void DownpatchVersionComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e) {
-            UpdateStartDownpatcherButton_IsEnabled();
-            console.Output("Downpatch version set to " + cbDownpatchVersion.SelectedItem.ToString());
-        }
-
-        private static string DetermineDoomVersion(long exeSize) {
+        private string DetermineDoomVersion(long exeSize) {
             using (var webClient = new WebClient()) {
                 var json = webClient.DownloadString(DOOM_ETERNAL_VERSION_URL);
-                _availableVersions = JsonConvert.DeserializeObject<Versions>(json);
+                _availableVersions = JsonConvert.DeserializeObject<DoomVersions>(json);
                 foreach (var version in _availableVersions.versions) {
                     if (version.size == exeSize) {
                         return version.name;
@@ -189,6 +184,57 @@ namespace Downpatcher {
             }
 
             return "";
+        }
+
+        private void StartDownpatcherButton_Click(object sender, RoutedEventArgs e) {
+            console.Output("Beginning to downpatch!");
+            DoomVersions.DoomVersion downpatchVersion = null;
+            List<DoomVersions.DoomVersion> intermediateVersions = new List<DoomVersions.DoomVersion>();
+            foreach (var version in _availableVersions.versions) {
+                // Get all versions in range (downpatchVersion, installedVersion].
+                if (downpatchVersion != null) {
+                    intermediateVersions.Add(version);
+                }
+                if (version.name.Equals(cbDownpatchVersion.SelectedItem.ToString())) {
+                    downpatchVersion = version;
+                }
+            }
+
+            // Create file list from all intermediate version file lists.
+            HashSet<string> aggregatedFiles = new HashSet<string>();
+            foreach (var version in intermediateVersions) {
+                string[] files = GetFileList(version.name);
+                foreach (string file in files) {
+                    aggregatedFiles.Add(file);
+                }
+            }
+
+            // Write aggregated file list to output filelist.txt.
+            string fileListPath = Directory.GetCurrentDirectory() + @"\filelist.txt";
+            StreamWriter streamWriter = new StreamWriter(fileListPath, false);
+            foreach (string file in aggregatedFiles) {
+                streamWriter.WriteLine(file);
+            }
+            streamWriter.Flush();
+
+            console.Output("Generated filelist.txt.");
+
+            // Using the downpatchVersion manifestIds and the generated filelist.txt, we now need to call DepotDownloader.
+
+
+        }
+
+        private void DownpatchVersionComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+            UpdateStartDownpatcherButton();
+            console.Output("Downpatch version set to " + cbDownpatchVersion.SelectedItem.ToString());
+        }
+
+        private void UsernameTextBox_TextChanged(object sender, TextChangedEventArgs e) {
+            UpdateStartDownpatcherButton();
+        }
+
+        private void PasswordPasswordBox_TextChanged(object sender, RoutedEventArgs e) {
+            UpdateStartDownpatcherButton();
         }
     }
 }

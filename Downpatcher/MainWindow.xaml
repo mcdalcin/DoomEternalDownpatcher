@@ -15,11 +15,23 @@
                 <TextBlock Name="tbVersion" />
             </Label>
         </Border>
-        <ComboBox Name="cbDownpatchVersion" SelectionChanged="DownpatchVersionComboBox_SelectionChanged" Text="Test" Height="22" Canvas.Left="10" Canvas.Top="62" Width="94" >
+        <ComboBox Name="cbDownpatchVersion" SelectionChanged="DownpatchVersionComboBox_SelectionChanged" Text="Test" Height="22" Canvas.Left="10" Canvas.Top="62" Width="120" >
         </ComboBox>
-        <Label Height="20" Canvas.Left="4" Canvas.Top="43" Padding="5,0,0,0">
+        <Label Height="20" Canvas.Left="10" Canvas.Top="42" Padding="0,0,0,0">
             <Bold>
                 <Run Text="Downpatch Version"/>
+            </Bold>
+        </Label>
+        <TextBox Name="tbUsername" TextChanged="UsernameTextBox_TextChanged" Canvas.Left="140" Canvas.Top="62" Width="120" Height="22"></TextBox>
+        <Label Height="20" Padding="0,0,0,0" Canvas.Left="140" Canvas.Top="42">
+            <Bold>
+                <Run Text="Steam Username"/>
+            </Bold>
+        </Label>
+        <PasswordBox Name="pbPassword" PasswordChanged="PasswordPasswordBox_TextChanged" Canvas.Left="265" Canvas.Top="62" Width="120" Height="22"></PasswordBox>
+        <Label Height="20" Padding="0,0,0,0" Canvas.Left="265" Canvas.Top="42">
+            <Bold>
+                <Run Text="Steam Password"/>
             </Bold>
         </Label>
         <Label Height="20" Canvas.Left="4" Canvas.Top="96" Padding="5,0,0,0">
@@ -46,6 +58,6 @@
                 </ScrollViewer>
             </Grid>
         </Border>
-        <Button Name="bStartDownpatcher" Canvas.Left="10" Canvas.Top="150" Padding="0" IsEnabled="False">Start Downpatcher</Button>
+        <Button Name="bStartDownpatcher" Click="StartDownpatcherButton_Click" Canvas.Left="10" Canvas.Top="150" Padding="0" IsEnabled="False">Start Downpatcher</Button>
     </Canvas>
 </Window>
