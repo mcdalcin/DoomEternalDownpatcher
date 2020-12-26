@@ -5,10 +5,12 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
@@ -24,6 +26,8 @@ namespace Downpatcher {
         private const string DOOM_ETERNAL_DATA_BASE_URL = "https://raw.githubusercontent.com/mcdalcin/DoomEternalDownpatcher/master/data/";
         private const string DOOM_ETERNAL_VERSION_URL = DOOM_ETERNAL_DATA_BASE_URL + "versions.json";
         private const string DEPOT_DOWNLOADER_LATEST_URL = "https://api.github.com/repos/SteamRE/DepotDownloader/releases/latest";
+        private const string DEPOT_DOWNLOADER_ERROR_STRING = "Error";
+        private const string DEPOT_DOWNLOADER_AUTH_REGEX_STRING = "auth";
 
         private readonly string _doomEternalPath = "";
         private readonly string _doomEternalDetectedVersion = "";
@@ -33,12 +37,14 @@ namespace Downpatcher {
 
         private DoomVersions _availableVersions;
 
-        private ConsoleContent console;
+        private ConsoleContent _console;
+
+        private Process _depotDownloaderProcess;
 
         public MainWindow() {
             InitializeComponent();
-            console = new ConsoleContent(scroller);
-            DataContext = console;
+            _console = new ConsoleContent(scroller);
+            DataContext = _console;
             _doomEternalPath = InitializeDoomRootPath();
             _doomEternalDetectedVersion = InitializeDoomVersion();
             InitializeDoomDownpatchVersions();
@@ -59,14 +65,14 @@ namespace Downpatcher {
 
             // Check that the DOOM Eternal folder exists.
             if (Directory.Exists(doomEternalPath)) {
-                console.Output("Successfully found DOOM Eternal installation folder!");
+                _console.Output("Successfully found DOOM Eternal installation folder!");
                 tbRootPath.Inlines.Add(new Bold(new Run("Root folder found: ")) {
                     Foreground = Brushes.LimeGreen
                 });
                 tbRootPath.Inlines.Add(new Run(doomEternalPath));
                 return doomEternalPath;
             } else {
-                console.Output("ERROR: Could not find DOOM Eternal installation folder!");
+                _console.Output("ERROR: Could not find DOOM Eternal installation folder!");
                 tbRootPath.Inlines.Add(new Bold(new Run("Unable to find DOOM Eternal root folder.")) {
                     Foreground = Brushes.Red
                 });
@@ -86,13 +92,13 @@ namespace Downpatcher {
             string doomVersion = DetermineDoomVersion(exeSize);
 
             if (doomVersion.Length != 0) {
-                console.Output("Successfully detected installed DOOM Eternal version: " + doomVersion);
+                _console.Output("Successfully detected installed DOOM Eternal version: " + doomVersion);
                 tbVersion.Inlines.Add(new Bold(new Run("Installed DOOM Eternal version: ") {
                     Foreground = Brushes.LimeGreen
                 }));
                 tbVersion.Inlines.Add(new Run(doomVersion));
             } else {
-                console.Output("ERROR: Unable to detect installed DOOM Eternal version.");
+                _console.Output("ERROR: Unable to detect installed DOOM Eternal version.");
                 tbVersion.Inlines.Add(new Bold(new Run("Unable to determine DOOM Eternal version.") {
                     Foreground = Brushes.Red
                 }));
@@ -112,14 +118,14 @@ namespace Downpatcher {
                 _depotDownloaderInstallPath = Directory.GetCurrentDirectory() + @"\" + Path.GetFileNameWithoutExtension(fileName);
                 // If latest DepotDownloader is not already installed, download and unzip it.
                 if (!Directory.Exists(_depotDownloaderInstallPath)) {
-                    console.Output("New DepotDownloader version detected. Installing " + name + ".");
-                    console.Output("Downloading " + downloadUrl);
+                    _console.Output("New DepotDownloader version detected. Installing " + name + ".");
+                    _console.Output("Downloading " + downloadUrl);
                     webClient.DownloadFile(downloadUrl, Directory.GetCurrentDirectory() + @"\" + fileName);
-                    console.Output("Unpacking downloaded files.");
+                    _console.Output("Unpacking downloaded files.");
                     ZipFile.ExtractToDirectory(fileName, _depotDownloaderInstallPath);
-                    console.Output("Successfully unpacked DepotDownloader!");
+                    _console.Output("Successfully unpacked DepotDownloader!");
                 }
-                console.Output(name + " installed.");
+                _console.Output(name + " installed.");
             }
         }
 
@@ -133,7 +139,7 @@ namespace Downpatcher {
                 cbDownpatchVersion.Items.Add(version.name);
                 count++;
             }
-            console.Output("There are " + count + " available downpatch versions. Please pick one above.");
+            _console.Output("There are " + count + " available downpatch versions. Please pick one above.");
         }
 
         private void InitializeDoomDownpatchFolder() {
@@ -160,7 +166,8 @@ namespace Downpatcher {
                 pbPassword.Password.Length != 0 &&
                 _doomEternalDetectedVersion.Length != 0 &&
                 _doomEternalDownpatchFolder.Length != 0 &&
-                _depotDownloaderInstallPath.Length != 0;
+                _depotDownloaderInstallPath.Length != 0 &&
+                _depotDownloaderProcess == null;
         }
 
         /** Returns the file list for the specified version in an array of strings. */
@@ -187,7 +194,8 @@ namespace Downpatcher {
         }
 
         private void StartDownpatcherButton_Click(object sender, RoutedEventArgs e) {
-            console.Output("Beginning to downpatch!");
+            // TODO: Add better thread-safety instead of relying on _depotDownloaderProcess being null.
+            _console.Output("Beginning to downpatch!");
             DoomVersions.DoomVersion downpatchVersion = null;
             List<DoomVersions.DoomVersion> intermediateVersions = new List<DoomVersions.DoomVersion>();
             foreach (var version in _availableVersions.versions) {
@@ -216,17 +224,97 @@ namespace Downpatcher {
                 streamWriter.WriteLine(file);
             }
             streamWriter.Flush();
+            streamWriter.Close();
 
-            console.Output("Generated filelist.txt.");
+            _console.Output("Generated filelist.txt.");
 
             // Using the downpatchVersion manifestIds and the generated filelist.txt, we now need to call DepotDownloader.
 
+            string[] depotIds = { "782332", "782333", "782334", "782335", "782336", "782337", "782338", "782339" };
 
+            ExecuteDepotDownload(depotIds[0], downpatchVersion.manifestIds[0], fileListPath);
+
+            Console.ReadLine();
+        }
+
+        private void ExecuteDepotDownload(string depotId, string manifestId, string fileListPath) {
+            ProcessStartInfo processInfo;
+
+            string command = "dotnet.exe " + _depotDownloaderInstallPath + @"\DepotDownloader.dll -app 782330 -depot " + depotId + " -manifest " + manifestId + " -username " + tbUsername.Text + " -password " + pbPassword.Password + " -filelist " + fileListPath + " -dir '" + _doomEternalDownpatchFolder + "'";
+
+            processInfo = new ProcessStartInfo("cmd.exe", "/c " + command);
+            processInfo.CreateNoWindow = true;
+            processInfo.UseShellExecute = false;
+            // *** Redirect the output ***
+            processInfo.RedirectStandardError = true;
+            processInfo.RedirectStandardOutput = true;
+            processInfo.RedirectStandardInput = true;
+
+            _depotDownloaderProcess = new Process();
+            UpdateStartDownpatcherButton();
+
+            // Route output, errors, and exit behavior.
+            _depotDownloaderProcess.OutputDataReceived += (object sender, DataReceivedEventArgs e) => HandleDepotDownloaderOutput(e.Data);
+
+            _depotDownloaderProcess.ErrorDataReceived += (object sender, DataReceivedEventArgs e) => HandleDepotDownloaderOutput(e.Data);
+
+            _depotDownloaderProcess.Exited += (object sender, System.EventArgs e) => HandleDepotDownloaderExit();
+
+            _depotDownloaderProcess.StartInfo = processInfo;
+            _depotDownloaderProcess.Start();
+            _depotDownloaderProcess.BeginOutputReadLine();
+            _depotDownloaderProcess.BeginErrorReadLine();
+        }
+
+        private void HandleDepotDownloaderOutput(string output) {
+            if (output == null) {
+                return;
+            }
+            // Invoke console output on the UI thread.
+            Application.Current.Dispatcher.Invoke(() => _console.Output("DepotDownloader>> " + output));
+            
+            if (output.Contains(DEPOT_DOWNLOADER_ERROR_STRING)) {
+                Application.Current.Dispatcher.Invoke(() => {
+                    _console.Output("DepotDownloader has hit an error. Please try again.");
+                    _depotDownloaderProcess.Kill();
+                    _depotDownloaderProcess = null;
+                    UpdateStartDownpatcherButton();
+                });
+            }
+
+            if (output.Contains(DEPOT_DOWNLOADER_AUTH_REGEX_STRING)) {
+                Application.Current.Dispatcher.Invoke(() => {
+                    AuthenticationDialog authenticationDialog = new AuthenticationDialog();
+                    if (authenticationDialog.ShowDialog() == true) {
+                        _console.Output("Using authentication code: " + authenticationDialog.AuthCode);
+
+                        StreamWriter sw = _depotDownloaderProcess.StandardInput;
+                        sw.WriteLine(authenticationDialog.AuthCode);
+                        sw.Flush();
+                    } else {
+                        _console.Output("Authentication code not entered. Shutting down DepotDownloader.");
+                        _depotDownloaderProcess.Kill();
+                        _depotDownloaderProcess = null;
+                        UpdateStartDownpatcherButton();
+                    }
+                });
+                
+                // Take the code and input into the current DepotDownloader process.
+            }
+        }
+
+        private void HandleDepotDownloaderExit() {
+            Application.Current.Dispatcher.Invoke(() => {
+                _console.Output("DepotDownloader has exited.");
+                _depotDownloaderProcess.Kill();
+                _depotDownloaderProcess = null;
+                UpdateStartDownpatcherButton();
+            });
         }
 
         private void DownpatchVersionComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e) {
             UpdateStartDownpatcherButton();
-            console.Output("Downpatch version set to " + cbDownpatchVersion.SelectedItem.ToString());
+            _console.Output("Downpatch version set to " + cbDownpatchVersion.SelectedItem.ToString());
         }
 
         private void UsernameTextBox_TextChanged(object sender, TextChangedEventArgs e) {
