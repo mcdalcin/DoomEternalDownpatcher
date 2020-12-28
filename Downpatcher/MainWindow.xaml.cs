@@ -266,7 +266,7 @@ namespace Downpatcher {
             string command = "dotnet.exe " + _depotDownloaderInstallPath + @"\DepotDownloader.dll -app 782330 -depot " + depotId + " -manifest " + manifestId + " -username " + username + " -password " + password + " -filelist \"" + fileListPath + "\" -dir \"" + _doomEternalDownpatchFolder + "\"";
 
             processInfo = new ProcessStartInfo("cmd.exe", "/c " + command);
-            processInfo.CreateNoWindow = false;
+            processInfo.CreateNoWindow = true;
             processInfo.UseShellExecute = false;
             // *** Redirect the output ***
             processInfo.RedirectStandardError = true;
