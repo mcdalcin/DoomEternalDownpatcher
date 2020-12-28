@@ -6,6 +6,7 @@
         xmlns:local="clr-namespace:Downpatcher"
         mc:Ignorable="d"
         Closing="Window_Closing"
+        ResizeMode="CanMinimize"
         Title="DOOM Eternal Steam Downpatcher" Height="350" Width="735">
     <Canvas>
         <Border BorderThickness="1" BorderBrush="#FF727272" Canvas.Left="10" Canvas.Top="10">
