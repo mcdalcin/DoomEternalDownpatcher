@@ -61,6 +61,9 @@ To get the new manifestIds, go to https://steamdb.info/app/782330/patchnotes/. C
 If done correctly, the code should now look like
 
 ```json
+...
+      ]
+    },
     {
       "name": "4.1",
       "size": "[4.1 SIZE]",
@@ -82,6 +85,9 @@ Note only depot 782332, 782333, and 782336 contained changes, therefore we only 
 The final thing that will need updating is the size. This is the size of the DOOMEternalx64vk.exe executable located in your Steam folder. Right click it, go to properties, and copy and paste the size in bytes (NOT the size on disk).
 
 ```json
+...
+      ]
+    },
     {
       "name": "4.1",
       "size": "427006464",
