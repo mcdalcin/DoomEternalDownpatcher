@@ -41,7 +41,6 @@ To begin, edit data/versions.json and add in a new entry based on the previous v
     {
       "name": "4.1",
       "size": "427006464",
-      # These are copies of 4.0's manifestIds, but they will need to be changed if a depot changes.
       "manifestIds": [
         "874160952806574135",
         "2403401997055312635",
@@ -65,7 +64,6 @@ If done correctly, the code should now look like
     {
       "name": "4.1",
       "size": "[4.1 SIZE]",
-      # These are copies of 4.0's manifestIds, but they will need to be changed if a depot changes.
       "manifestIds": [
         "874160952806574135", # 782332
         "2403401997055312635", # 782333
@@ -87,16 +85,15 @@ The final thing that will need updating is the size. This is the size of the DOO
     {
       "name": "4.1",
       "size": "427006464",
-      # These are copies of 4.0's manifestIds, but they will need to be changed if a depot changes.
       "manifestIds": [
-        "874160952806574135", # 782332
-        "2403401997055312635", # 782333
-        "3131765218301983886", # 782334
-        "6434174793668377623", # 782335
-        "4833863637416404249", # 782336
-        "379760896725657507", # 782337
-        "4899404039317730890", # 782338
-        "9073293208177965840" # 782339
+        "874160952806574135",
+        "2403401997055312635",
+        "3131765218301983886",
+        "6434174793668377623",
+        "4833863637416404249",
+        "379760896725657507",
+        "4899404039317730890",
+        "9073293208177965840"
       ]
     }
 ```
