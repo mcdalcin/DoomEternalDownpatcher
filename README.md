@@ -23,7 +23,7 @@ Each version may contain new manifest ids for each depot that we need to grab. N
 
 To begin, edit data/versions.json and add in a new entry based on the previous version. For example, if we are adding in version 4.1, we would create a copy of 4.0's entry as such:
 
-`
+```json
     {
       "name": "4.0",
       "size": "432238592",
@@ -53,7 +53,7 @@ To begin, edit data/versions.json and add in a new entry based on the previous v
         "9073293208177965840"
       ]
     }
-`
+```
 
 Each manifestId will remain the same as the previous version unless a depot contains changes. There are 8 steam depots for DOOM Eternal that we care about. In particular, depots  782332 through 782339. The manifestIds are in order starting with 782332.
 
@@ -61,7 +61,7 @@ To get the new manifestIds, go to https://steamdb.info/app/782330/patchnotes/. C
 
 If done correctly, the code should now look like
 
-`
+```json
     {
       "name": "4.1",
       "size": "[4.1 SIZE]",
@@ -77,13 +77,13 @@ If done correctly, the code should now look like
         "9073293208177965840" # 782339
       ]
     }
-`
+```
 
 Note only depot 782332, 782333, and 782336 contained changes, therefore we only changed the 1st, 2nd, and 5th manifestIds.
 
 The final thing that will need updating is the size. This is the size of the DOOMEternalx64vk.exe executable located in your Steam folder. Right click it, go to properties, and copy and paste the size in bytes (NOT the size on disk).
 
-`
+```json
     {
       "name": "4.1",
       "size": "427006464",
@@ -99,6 +99,6 @@ The final thing that will need updating is the size. This is the size of the DOO
         "9073293208177965840" # 782339
       ]
     }
-`
+```
 
 Finally, commit the changes and test out the downpatcher to ensure it is working for the new version.
