@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Downpatcher"
         mc:Ignorable="d"
+        Closing="Window_Closing"
         Title="DOOM Eternal Steam Downpatcher" Height="350" Width="735">
     <Canvas>
         <Border BorderThickness="1" BorderBrush="#FF727272" Canvas.Left="10" Canvas.Top="10">
@@ -58,6 +59,7 @@
                 </ScrollViewer>
             </Grid>
         </Border>
-        <Button Name="bStartDownpatcher" Click="StartDownpatcherButton_Click" Canvas.Left="10" Canvas.Top="150" Padding="0" IsEnabled="False">Start Downpatcher</Button>
+        <Button Name="bStartDownpatcher" Click="StartDownpatcherButton_Click" Canvas.Left="10" Canvas.Top="144" Padding="5,0" Height="30" IsEnabled="False">Start Downpatcher</Button>
+        <Button x:Name="bCancelDownpatcher" Click="CancelDownpatcherButton_Click" Canvas.Left="126" Canvas.Top="144" Padding="5,0" Height="30" IsEnabled="False">Cancel Downpatcher</Button>
     </Canvas>
 </Window>

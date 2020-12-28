@@ -11,6 +11,8 @@ using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
+using System.Text;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
@@ -27,19 +29,22 @@ namespace Downpatcher {
         private const string DOOM_ETERNAL_VERSION_URL = DOOM_ETERNAL_DATA_BASE_URL + "versions.json";
         private const string DEPOT_DOWNLOADER_LATEST_URL = "https://api.github.com/repos/SteamRE/DepotDownloader/releases/latest";
         private const string DEPOT_DOWNLOADER_ERROR_STRING = "Error";
-        private const string DEPOT_DOWNLOADER_AUTH_REGEX_STRING = "auth";
+        private const string DEPOT_DOWNLOADER_AUTH_2FA_REGEX_STRING = "Please enter your 2 factor auth code from your authenticator app";
+        private const string DEPOT_DOWNLOADER_AUTH_CODE_REGEX_STRING = "Please enter the authentication code sent to your email address";
 
         private readonly string _doomEternalPath = "";
         private readonly string _doomEternalDetectedVersion = "";
 
-        private string _doomEternalDownpatchFolder = "";
-        private string _depotDownloaderInstallPath = "";
+        private volatile string _doomEternalDownpatchFolder = "";
+        private volatile string _depotDownloaderInstallPath = "";
+        private volatile bool _depotDownloaderCancelled = false;
 
         private DoomVersions _availableVersions;
 
         private ConsoleContent _console;
 
-        private Process _depotDownloaderProcess;
+        private volatile Process _depotDownloaderProcess;
+        private Object _depotDownloaderProcessLock = new Object();
 
         public MainWindow() {
             InitializeComponent();
@@ -156,18 +161,27 @@ namespace Downpatcher {
                 _doomEternalDownpatchFolder = selectFolderDialog.FileName;
                 lSelectedFolder.Content = _doomEternalDownpatchFolder;
             }
+            UpdateDownpatcherButtons();
+        }
+
+        private void UpdateDownpatcherButtons() {
             UpdateStartDownpatcherButton();
+            UpdateCancelDownpatcherButton();
         }
 
         private void UpdateStartDownpatcherButton() {
             bStartDownpatcher.IsEnabled =
-                cbDownpatchVersion.SelectedItem.ToString().Length != 0 &&
+                cbDownpatchVersion.SelectedItem != null &&
                 tbUsername.Text.Length != 0 &&
                 pbPassword.Password.Length != 0 &&
                 _doomEternalDetectedVersion.Length != 0 &&
                 _doomEternalDownpatchFolder.Length != 0 &&
                 _depotDownloaderInstallPath.Length != 0 &&
                 _depotDownloaderProcess == null;
+        }
+
+        private void UpdateCancelDownpatcherButton() {
+            bCancelDownpatcher.IsEnabled = _depotDownloaderProcess != null;
         }
 
         /** Returns the file list for the specified version in an array of strings. */
@@ -196,6 +210,7 @@ namespace Downpatcher {
         private void StartDownpatcherButton_Click(object sender, RoutedEventArgs e) {
             // TODO: Add better thread-safety instead of relying on _depotDownloaderProcess being null.
             _console.Output("Beginning to downpatch!");
+            _depotDownloaderCancelled = false;
             DoomVersions.DoomVersion downpatchVersion = null;
             List<DoomVersions.DoomVersion> intermediateVersions = new List<DoomVersions.DoomVersion>();
             foreach (var version in _availableVersions.versions) {
@@ -229,60 +244,87 @@ namespace Downpatcher {
             _console.Output("Generated filelist.txt.");
 
             // Using the downpatchVersion manifestIds and the generated filelist.txt, we now need to call DepotDownloader.
-
+            string username = tbUsername.Text;
+            string password = pbPassword.Password;
+            
             string[] depotIds = { "782332", "782333", "782334", "782335", "782336", "782337", "782338", "782339" };
 
-            ExecuteDepotDownload(depotIds[0], downpatchVersion.manifestIds[0], fileListPath);
-
-            Console.ReadLine();
+            // Run DepotDownloader on a new thread to not block the UI-thread. 
+            new Thread(() => {
+                for (int i = 0; i < depotIds.Length; i++) {
+                    ExecuteDepotDownload(depotIds[i], downpatchVersion.manifestIds[i], fileListPath, username, password);
+                    if (_depotDownloaderCancelled) {
+                        return;
+                    }
+                }
+            }).Start();
         }
 
-        private void ExecuteDepotDownload(string depotId, string manifestId, string fileListPath) {
+        private void ExecuteDepotDownload(string depotId, string manifestId, string fileListPath, string username, string password) {
             ProcessStartInfo processInfo;
 
-            string command = "dotnet.exe " + _depotDownloaderInstallPath + @"\DepotDownloader.dll -app 782330 -depot " + depotId + " -manifest " + manifestId + " -username " + tbUsername.Text + " -password " + pbPassword.Password + " -filelist " + fileListPath + " -dir '" + _doomEternalDownpatchFolder + "'";
+            string command = "dotnet.exe " + _depotDownloaderInstallPath + @"\DepotDownloader.dll -app 782330 -depot " + depotId + " -manifest " + manifestId + " -username " + username + " -password " + password + " -filelist \"" + fileListPath + "\" -dir \"" + _doomEternalDownpatchFolder + "\"";
 
             processInfo = new ProcessStartInfo("cmd.exe", "/c " + command);
-            processInfo.CreateNoWindow = true;
+            processInfo.CreateNoWindow = false;
             processInfo.UseShellExecute = false;
             // *** Redirect the output ***
             processInfo.RedirectStandardError = true;
             processInfo.RedirectStandardOutput = true;
             processInfo.RedirectStandardInput = true;
 
-            _depotDownloaderProcess = new Process();
-            UpdateStartDownpatcherButton();
+            lock (_depotDownloaderProcessLock) {
+                _depotDownloaderProcess = new Process();
+                Application.Current.Dispatcher.Invoke(() => UpdateDownpatcherButtons());
 
-            // Route output, errors, and exit behavior.
-            _depotDownloaderProcess.OutputDataReceived += (object sender, DataReceivedEventArgs e) => HandleDepotDownloaderOutput(e.Data);
+                // Route errors and exit behavior.
+                _depotDownloaderProcess.ErrorDataReceived += (object sender, DataReceivedEventArgs e) => HandleDepotDownloaderOutput(e.Data);
 
-            _depotDownloaderProcess.ErrorDataReceived += (object sender, DataReceivedEventArgs e) => HandleDepotDownloaderOutput(e.Data);
+                // DepotDownloader may have an interaction prompt for authentication, therefore we'll need to read in the output ourselves.
+                Thread readStandardOutput = new Thread(() => {
 
-            _depotDownloaderProcess.Exited += (object sender, System.EventArgs e) => HandleDepotDownloaderExit();
+                    StringBuilder output = new StringBuilder();
+                    char character;
 
-            _depotDownloaderProcess.StartInfo = processInfo;
-            _depotDownloaderProcess.Start();
-            _depotDownloaderProcess.BeginOutputReadLine();
-            _depotDownloaderProcess.BeginErrorReadLine();
+                    Process p = _depotDownloaderProcess;
+                    try {
+                        while (_depotDownloaderProcess != null && p != null && (character = (char)p.StandardOutput.Read()) >= 0) {
+                            // Accumulate buffer until newline or authentication interaction prompt.
+                            if (character == '\n' || (character == ':' && (output.ToString().Contains(DEPOT_DOWNLOADER_AUTH_2FA_REGEX_STRING) || output.ToString().Contains(DEPOT_DOWNLOADER_AUTH_CODE_REGEX_STRING)))) {
+                                HandleDepotDownloaderOutput(output.ToString());
+                                output.Clear();
+                            } else {
+                                output.Append(character);
+                            }
+                        }
+                    } catch (Exception e) {
+                        // Ignore.
+                    }
+                });
+
+                _depotDownloaderProcess.StartInfo = processInfo;
+                _depotDownloaderProcess.Start();
+                readStandardOutput.Start();
+                _depotDownloaderProcess.BeginErrorReadLine();
+                _depotDownloaderProcess.WaitForExit();
+            }
         }
 
         private void HandleDepotDownloaderOutput(string output) {
-            if (output == null) {
+            if (output == null || output == "") {
                 return;
             }
-            // Invoke console output on the UI thread.
-            Application.Current.Dispatcher.Invoke(() => _console.Output("DepotDownloader>> " + output));
-            
+            // Invoke console output on the UI thread and strip off any stray newline characters.
+            Application.Current.Dispatcher.Invoke(() => _console.Output("DepotDownloader>> " + output.Replace('\n', '\0')));
+
             if (output.Contains(DEPOT_DOWNLOADER_ERROR_STRING)) {
                 Application.Current.Dispatcher.Invoke(() => {
                     _console.Output("DepotDownloader has hit an error. Please try again.");
-                    _depotDownloaderProcess.Kill();
-                    _depotDownloaderProcess = null;
-                    UpdateStartDownpatcherButton();
+                    KillDepotDownloaderProcess();
                 });
             }
 
-            if (output.Contains(DEPOT_DOWNLOADER_AUTH_REGEX_STRING)) {
+            if (output.Contains(DEPOT_DOWNLOADER_AUTH_2FA_REGEX_STRING) || output.Contains(DEPOT_DOWNLOADER_AUTH_CODE_REGEX_STRING)) {
                 Application.Current.Dispatcher.Invoke(() => {
                     AuthenticationDialog authenticationDialog = new AuthenticationDialog();
                     if (authenticationDialog.ShowDialog() == true) {
@@ -293,36 +335,47 @@ namespace Downpatcher {
                         sw.Flush();
                     } else {
                         _console.Output("Authentication code not entered. Shutting down DepotDownloader.");
-                        _depotDownloaderProcess.Kill();
-                        _depotDownloaderProcess = null;
-                        UpdateStartDownpatcherButton();
+                        KillDepotDownloaderProcess();
                     }
                 });
-                
+
                 // Take the code and input into the current DepotDownloader process.
             }
         }
 
-        private void HandleDepotDownloaderExit() {
-            Application.Current.Dispatcher.Invoke(() => {
-                _console.Output("DepotDownloader has exited.");
+        /** Must be called from the UI-thread. */
+        private void KillDepotDownloaderProcess() {
+            _depotDownloaderCancelled = true;
+            if (_depotDownloaderProcess != null && !_depotDownloaderProcess.HasExited) {
                 _depotDownloaderProcess.Kill();
+                _depotDownloaderProcess.Close();
+            }
+            lock (_depotDownloaderProcessLock) {
                 _depotDownloaderProcess = null;
-                UpdateStartDownpatcherButton();
-            });
+            }
+            UpdateDownpatcherButtons();
         }
 
         private void DownpatchVersionComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e) {
-            UpdateStartDownpatcherButton();
+            UpdateDownpatcherButtons();
             _console.Output("Downpatch version set to " + cbDownpatchVersion.SelectedItem.ToString());
         }
 
         private void UsernameTextBox_TextChanged(object sender, TextChangedEventArgs e) {
-            UpdateStartDownpatcherButton();
+            UpdateDownpatcherButtons();
         }
 
         private void PasswordPasswordBox_TextChanged(object sender, RoutedEventArgs e) {
-            UpdateStartDownpatcherButton();
+            UpdateDownpatcherButtons();
+        }
+
+        private void Window_Closing(object sender, CancelEventArgs e) {
+            KillDepotDownloaderProcess();
+        }
+
+        private void CancelDownpatcherButton_Click(object sender, RoutedEventArgs e) {
+            _console.Output("Cancelling DepotDownloader.");
+            KillDepotDownloaderProcess();
         }
     }
 }
