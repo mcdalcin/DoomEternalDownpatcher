@@ -14,7 +14,7 @@ There are two parts to adding a new version.
 Add a filelist in the data/ folder. It should be named version_id.txt where version_id is the version number (e.g. 1.0, 1.1.1, etc).
 
 regex that can be used to extract filenames for the filelist:
-[a-zA-Z_]+\\\(\*\\w\*\\\)\*\\w\*\\.[^ ]*\w
+[a-zA-Z_]+\\\(\*\[\w-]\*\\\)\*\\w\*\\.[^ ]*\w
 
 
 ### Adding in the manifestIds and size for the new version.
