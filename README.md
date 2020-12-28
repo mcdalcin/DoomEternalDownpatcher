@@ -5,4 +5,4 @@ In progress.
 
 :) hello
 
-[\w-]+\\.[^0-9\n]*[a-z]
+[a-zA-Z_]+\(*\w*\)*\w*\.[^ ]*\w
