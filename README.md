@@ -1,23 +1,28 @@
+
 # DoomEternalDownpatcher
 A Downpatcher for DOOM Eternal. Steam only.
 
-In progress.
+Made with love from Xiae
 
-:) hello
+  ![XiaeKawaii](https://github.com/mcdalcin/DoomEternalDownpatcher/blob/master/kawaii.jpg?raw=true)
 
 ## Adding a new version
 
-There are two parts to adding a new version. 
+When adding in a new version, two things must be done.
 
-### Adding in a filelist for the new version.
+ - Adding in the filelist.
+ - Modifying data/versions.json with the manifest and size information.
+
+#### ADDING IN THE FILELIST
 
 Using the FilelistGenerator program, create a filelist.txt for the new patch. Rename this filelist.txt to the new version name and add it to the data/ folder.
 
-### Adding in the manifestIds and size for the new version.
+#### MODIFY VERSIONS.JSON
 
-Each version may contain new manifest ids for each depot that we need to grab. Note that a manifest id may not have changed if there are no changes made to a particular depot.
+Each version will contain a new manifest id for each depot that has changed.
 
-To begin, edit data/versions.json and add in a new entry based on the previous version. For example, if we are adding in version 4.1, we would create a copy of 4.0's entry as such:
+##### CREATE AN ENTRY FOR THE NEW VERSION
+To begin, edit data/versions.json and add in a new entry based on the previous version.  For example, if we are adding in version 4.1, begin by creating a copy of 4.0.
 
 ```json
     {
@@ -49,10 +54,13 @@ To begin, edit data/versions.json and add in a new entry based on the previous v
       ]
     }
 ```
+##### ADJUST MANIFESTIDS FOR THE NEW VERSION
 
-Each manifestId will remain the same as the previous version unless a depot contains changes. There are 8 steam depots for DOOM Eternal that we care about. In particular, depots  782332 through 782339. The manifestIds are in order starting with 782332.
+The manifestIds correspond to the 8 steam depots for DOOM Eternal starting with depot 782332 and ending with depot 782339. Note that a manifest id will only change for the depot if it contained changes from the previous patch.
 
-To get the new manifestIds, go to https://steamdb.info/app/782330/patchnotes/. Click on the current patch (in this example, the December 9th patch here: https://steamdb.info/patchnotes/5922677). Once there, go through each depot change and replace the manifestId accordingly.
+To get the new manifestIds, go to https://steamdb.info/app/782330/patchnotes/. Click on the current patch (in this example, the December 9th patch corresponds to version 4.1). Once there, go through each depot change and replace the manifestId accordingly. 
+
+In our example, the depots 782332, 782333, and 782336 contain changes and therefore their manifest ids must be updated. This corresponds to the first, second, and fifth manifest ids.
 
 If done correctly, the code should now look like
 
@@ -75,9 +83,7 @@ If done correctly, the code should now look like
       ]
     }
 ```
-
-Note only depot 782332, 782333, and 782336 contained changes, therefore we only changed the 1st, 2nd, and 5th manifestIds.
-
+##### UPDATING THE SIZE FOR THE NEW VERSION
 The final thing that will need updating is the size. This is the size of the DOOMEternalx64vk.exe executable located in your Steam folder. Right click it, go to properties, and copy and paste the size in bytes (NOT the size on disk).
 
 ```json
@@ -100,4 +106,4 @@ The final thing that will need updating is the size. This is the size of the DOO
     }
 ```
 
-Finally, commit the changes and test out the downpatcher to ensure it is working for the new version.
+##### FINALLY, COMMIT THE NEW VERSIONS.JSON AND TEST THE DOWNPATCHER!
