@@ -13,11 +13,11 @@ When adding in a new version, two things must be done.
  - Adding in the filelist.
  - Modifying data/versions.json with the manifest and size information.
 
-#### ADDING IN THE FILELIST
+### ADDING IN THE FILELIST
 
 Using the FilelistGenerator program, create a filelist.txt for the new patch. Rename this filelist.txt to the new_version_name.txt and add it to the data/ folder.
 
-#### MODIFY VERSIONS.JSON
+### MODIFY VERSIONS.JSON
 
 Each version will contain a new manifest id for each depot that has changed.
 
