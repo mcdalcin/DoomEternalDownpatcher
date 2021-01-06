@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30804.86
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Downpatcher", "Downpatcher\Downpatcher.csproj", "{14D36140-ED0C-46BE-9CD9-A7602690359D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Downpatcher", "Downpatcher\Downpatcher.csproj", "{14D36140-ED0C-46BE-9CD9-A7602690359D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FilelistGenerator", "FilelistGenerator\FilelistGenerator.csproj", "{75BF1C1E-A524-43A3-B632-B4285FB14AC3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{14D36140-ED0C-46BE-9CD9-A7602690359D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{14D36140-ED0C-46BE-9CD9-A7602690359D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{14D36140-ED0C-46BE-9CD9-A7602690359D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{75BF1C1E-A524-43A3-B632-B4285FB14AC3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{75BF1C1E-A524-43A3-B632-B4285FB14AC3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{75BF1C1E-A524-43A3-B632-B4285FB14AC3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{75BF1C1E-A524-43A3-B632-B4285FB14AC3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
