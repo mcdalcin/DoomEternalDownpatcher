@@ -15,7 +15,7 @@ When adding in a new version, two things must be done.
 
 #### ADDING IN THE FILELIST
 
-Using the FilelistGenerator program, create a filelist.txt for the new patch. Rename this filelist.txt to the new version name and add it to the data/ folder.
+Using the FilelistGenerator program, create a filelist.txt for the new patch. Rename this filelist.txt to the new_version_name.txt and add it to the data/ folder.
 
 #### MODIFY VERSIONS.JSON
 
