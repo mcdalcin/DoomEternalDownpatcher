@@ -2,7 +2,7 @@
 # DoomEternalDownpatcher
 A Downpatcher for DOOM Eternal. Steam only.
 
-Made with love from Xiae
+Made with love from Xiae.
 
   ![XiaeKawaii](https://github.com/mcdalcin/DoomEternalDownpatcher/blob/master/kawaii.jpg?raw=true)
 
