@@ -1,5 +1,4 @@
 ﻿using Microsoft.Win32;
-using Microsoft.WindowsAPICodePack.Dialogs;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -14,6 +13,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
+using System.Windows.Forms;
 
 namespace Downpatcher {
     /// <summary>
@@ -40,7 +40,7 @@ namespace Downpatcher {
 
         private volatile string _doomEternalDownpatchFolder = "";
         private volatile string _depotDownloaderInstallPath = "";
-        private volatile bool _depotDownloaderCancelled = false;
+        private volatile bool _depotDownloaderCanceled = false;
 
         private DoomVersions _availableVersions;
 
@@ -182,11 +182,11 @@ namespace Downpatcher {
         }
 
         private void SelectFolderButton_Click(object sender, RoutedEventArgs e) {
-            CommonOpenFileDialog selectFolderDialog = new CommonOpenFileDialog() {
-                IsFolderPicker = true
-            };
-            if (selectFolderDialog.ShowDialog() == CommonFileDialogResult.Ok) {
-                _doomEternalDownpatchFolder = selectFolderDialog.FileName;
+            FolderBrowserDialog selectFolderDialog = new FolderBrowserDialog();
+            selectFolderDialog.SelectedPath = Directory.GetCurrentDirectory();
+            if (selectFolderDialog.ShowDialog() 
+                    == System.Windows.Forms.DialogResult.OK) {
+                _doomEternalDownpatchFolder = selectFolderDialog.SelectedPath;
                 lSelectedFolder.Content = _doomEternalDownpatchFolder;
             }
             UpdateDownpatcherButtons();
@@ -195,6 +195,33 @@ namespace Downpatcher {
         private void UpdateDownpatcherButtons() {
             UpdateStartDownpatcherButton();
             UpdateCancelDownpatcherButton();
+            UpdateRequiredNotifiers();
+            spInProgress.Visibility = 
+                _depotDownloaderProcess != null 
+                    ? Visibility.Visible 
+                    : Visibility.Hidden;
+        }
+
+        private void UpdateRequiredNotifiers() {
+            tbUsernameRequired.Visibility =
+                tbUsername.Text.Length == 0
+                    ? Visibility.Visible
+                    : Visibility.Hidden;
+            tbPasswordRequired.Visibility =
+                pbPassword.Password.Length == 0
+                    ? Visibility.Visible
+                    : Visibility.Hidden;
+            tbVersionRequired.Visibility =
+                cbDownpatchVersion.SelectedItem == null
+                    ? Visibility.Visible
+                    : Visibility.Hidden;
+
+            tbRequiredNotification.Visibility =
+                tbUsernameRequired.Visibility == Visibility.Hidden
+                    && tbPasswordRequired.Visibility == Visibility.Hidden
+                    && tbVersionRequired.Visibility == Visibility.Hidden
+                        ? Visibility.Hidden
+                        : Visibility.Visible;
         }
 
         private void UpdateStartDownpatcherButton() {
@@ -245,7 +272,7 @@ namespace Downpatcher {
             // TODO: Add better thread-safety instead of relying on 
             // _depotDownloaderProcess being null.
             _console.Output("Beginning to downpatch!");
-            _depotDownloaderCancelled = false;
+            _depotDownloaderCanceled = false;
             DoomVersions.DoomVersion downpatchVersion = null;
             List<DoomVersions.DoomVersion> intermediateVersions =
                 new List<DoomVersions.DoomVersion>();
@@ -298,7 +325,7 @@ namespace Downpatcher {
                         fileListPath,
                         username,
                         password);
-                    if (_depotDownloaderCancelled) {
+                    if (_depotDownloaderCanceled) {
                         return;
                     }
                 }
@@ -332,7 +359,7 @@ namespace Downpatcher {
 
             lock (_depotDownloaderProcessLock) {
                 _depotDownloaderProcess = new Process();
-                Application.Current.Dispatcher.Invoke(
+                System.Windows.Application.Current.Dispatcher.Invoke(
                     () => UpdateDownpatcherButtons());
 
                 // Route errors and exit behavior.
@@ -358,7 +385,7 @@ namespace Downpatcher {
                                 output.ToString().Contains(
                                     DEPOT_DOWNLOADER_AUTH_2FA_REGEX_STRING)
                                 || output.ToString().Contains(
-                                    DEPOT_DOWNLOADER_ERROR_STRING);
+                                    DEPOT_DOWNLOADER_AUTH_CODE_REGEX_STRING);
                             if (character == '\n' || requiresAuth) {
                                 HandleDepotDownloaderOutput(output.ToString());
                                 output.Clear();
@@ -385,11 +412,11 @@ namespace Downpatcher {
             }
             // Invoke console output on the UI thread and strip off any stray newline
             // characters.
-            Application.Current.Dispatcher.Invoke(() => 
+            System.Windows.Application.Current.Dispatcher.Invoke(() => 
                 _console.Output("DepotDownloader>> " + output.Replace('\n', '\0')));
 
             if (output.Contains(DEPOT_DOWNLOADER_ERROR_STRING)) {
-                Application.Current.Dispatcher.Invoke(() => {
+                System.Windows.Application.Current.Dispatcher.Invoke(() => {
                     _console.Output(
                         "DepotDownloader has hit an error. Please try again.");
                     KillDepotDownloaderProcess();
@@ -400,7 +427,7 @@ namespace Downpatcher {
                 output.Contains(DEPOT_DOWNLOADER_AUTH_2FA_REGEX_STRING)
                 || output.Contains(DEPOT_DOWNLOADER_AUTH_CODE_REGEX_STRING);
             if (requiresAuth) {
-                Application.Current.Dispatcher.Invoke(() => {
+                System.Windows.Application.Current.Dispatcher.Invoke(() => {
                     AuthenticationDialog authenticationDialog = new AuthenticationDialog();
                     if (authenticationDialog.ShowDialog() == true) {
                         _console.Output("Using authentication code: " + authenticationDialog.AuthCode);
@@ -420,7 +447,7 @@ namespace Downpatcher {
 
         /** Must be called from the UI-thread. */
         private void KillDepotDownloaderProcess() {
-            _depotDownloaderCancelled = true;
+            _depotDownloaderCanceled = true;
             if (_depotDownloaderProcess != null 
                 && !_depotDownloaderProcess.HasExited) {
                 _depotDownloaderProcess.Kill();
@@ -457,7 +484,7 @@ namespace Downpatcher {
 
         private void CancelDownpatcherButton_Click(
             object sender, RoutedEventArgs e) {
-            _console.Output("Cancelling DepotDownloader.");
+            _console.Output("Canceling DepotDownloader.");
             KillDepotDownloaderProcess();
         }
     }

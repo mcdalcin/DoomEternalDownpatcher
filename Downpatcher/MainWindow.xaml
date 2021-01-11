@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:fa="http://schemas.fontawesome.io/icons/"
         xmlns:local="clr-namespace:Downpatcher"
         mc:Ignorable="d"
         Closing="Window_Closing"
@@ -42,7 +43,7 @@
             </Bold>
         </Label>
         <StackPanel Orientation="Horizontal" Height="20" Canvas.Left="10" Canvas.Top="126">
-            <Label x:Name="lSelectedFolder" BorderThickness="1" BorderBrush="#FF727272" Height="20" Padding="5,0,5,0" Content="Default folder..." Margin="0,-10,0,10"/>
+            <Label x:Name="lSelectedFolder" BorderThickness="1" BorderBrush="#FF727272" Height="20" Padding="5,0,5,0" Content="Default folder..." MaxWidth="600" Margin="0,-10,0,10"/>
             <Button x:Name="bSelectFolder" Click="SelectFolderButton_Click" Height="20" Content="Select Folder" Margin="5,-10,0,10"/>
         </StackPanel>
         <Border BorderThickness="1" BorderBrush="#FF727272" Canvas.Left="10" Canvas.Top="179" Width="700" Height="121">
@@ -60,7 +61,15 @@
                 </ScrollViewer>
             </Grid>
         </Border>
-        <Button Name="bStartDownpatcher" Click="StartDownpatcherButton_Click" Canvas.Left="10" Canvas.Top="144" Padding="5,0" Height="30" IsEnabled="False">Start Downpatcher</Button>
-        <Button x:Name="bCancelDownpatcher" Click="CancelDownpatcherButton_Click" Canvas.Left="126" Canvas.Top="144" Padding="5,0" Height="30" IsEnabled="False">Cancel Downpatcher</Button>
+        <Button Name="bStartDownpatcher" Background="LightGreen" Click="StartDownpatcherButton_Click" Canvas.Left="10" Canvas.Top="144" Padding="5,0" Height="30" IsEnabled="False">Start Downpatcher</Button>
+        <Button Name="bCancelDownpatcher" Background="IndianRed" Click="CancelDownpatcherButton_Click" Canvas.Left="126" Canvas.Top="144" Padding="5,0" Height="30" IsEnabled="False">Cancel Downpatcher</Button>
+        <StackPanel Name="spInProgress" Visibility="Hidden" Orientation="Horizontal" Canvas.Left="252" Canvas.Top="158" Margin="0,1,0,0">
+            <fa:ImageAwesome Icon="CircleOutlineNotch" Spin="true" Height="10" Width="10" />
+            <TextBlock Margin="5,0,0,0">In progress...</TextBlock>
+        </StackPanel>
+        <TextBlock Name="tbRequiredNotification" Foreground="Red" FontWeight="Bold" Canvas.Left="252" Canvas.Top="158">* Required items missing</TextBlock>
+        <TextBlock Name="tbUsernameRequired" Foreground="Red" FontWeight="Bold" Canvas.Left="236" Canvas.Top="40">*</TextBlock>
+        <TextBlock Name="tbPasswordRequired" Foreground="Red" FontWeight="Bold" Canvas.Left="358" Canvas.Top="40">*</TextBlock>
+        <TextBlock Name="tbVersionRequired" Foreground="Red" FontWeight="Bold" Canvas.Left="121" Canvas.Top="40">*</TextBlock>
     </Canvas>
 </Window>
