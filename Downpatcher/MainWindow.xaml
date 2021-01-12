@@ -5,46 +5,57 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:fa="http://schemas.fontawesome.io/icons/"
         xmlns:local="clr-namespace:Downpatcher"
+        Style="{StaticResource DefaultStyle}"
         mc:Ignorable="d"
         Closing="Window_Closing"
         ResizeMode="CanMinimize"
         Title="DOOM Eternal Steam Downpatcher" Height="350" Width="735">
     <Canvas>
-        <Border BorderThickness="1" BorderBrush="#FF727272" Canvas.Left="10" Canvas.Top="10">
-            <TextBlock Name="tbRootPath" TextTrimming="WordEllipsis" Width="400" Height="20" Padding="5,1,0,0" />
-        </Border>
-        <Border BorderThickness="1" BorderBrush="#FF727272" Padding="2,0,5,0" Canvas.Left="417" Canvas.Top="10">
-            <Label Height="20" Padding="5,1,0,0">
-                <TextBlock Name="tbVersion" />
+        <Image Source="Images/bg.png" Width="1400" Canvas.Left="-430" Canvas.Top="-280" Opacity=".05"></Image>
+        <StackPanel Orientation="Horizontal" Canvas.Left="10" Canvas.Top="10">
+            <Border BorderThickness="1" BorderBrush="LightGray">
+                <TextBlock Name="tbRootPath" TextTrimming="WordEllipsis" Background="White" FontSize="10" Width="400" Height="14" Padding="2,1,0,0" />
+            </Border>
+            <Border BorderThickness="1" BorderBrush="LightGray" Background="White" Padding="2,0,5,0" Canvas.Left="417" Canvas.Top="10" Margin="5,0,0,0">
+                <Label Height="14" Padding="2,1,0,0">
+                    <TextBlock Name="tbVersion" FontSize="10" />
+                </Label>
+            </Border>
+        </StackPanel>
+        <StackPanel Canvas.Left="10" Canvas.Top="42">
+            <Label Padding="0,0,0,0">
+                <Bold>
+                    <Run Text="Downpatch Version"/>
+                </Bold>
             </Label>
-        </Border>
-        <ComboBox Name="cbDownpatchVersion" SelectionChanged="DownpatchVersionComboBox_SelectionChanged" Text="Test" Height="22" Canvas.Left="10" Canvas.Top="62" Width="120" >
-        </ComboBox>
-        <Label Height="20" Canvas.Left="10" Canvas.Top="42" Padding="0,0,0,0">
-            <Bold>
-                <Run Text="Downpatch Version"/>
-            </Bold>
-        </Label>
-        <TextBox Name="tbUsername" TextChanged="UsernameTextBox_TextChanged" Canvas.Left="140" Canvas.Top="62" Width="120" Height="22"></TextBox>
-        <Label Height="20" Padding="0,0,0,0" Canvas.Left="140" Canvas.Top="42">
-            <Bold>
-                <Run Text="Steam Username"/>
-            </Bold>
-        </Label>
-        <PasswordBox Name="pbPassword" PasswordChanged="PasswordPasswordBox_TextChanged" Canvas.Left="265" Canvas.Top="62" Width="120" Height="22"></PasswordBox>
-        <Label Height="20" Padding="0,0,0,0" Canvas.Left="265" Canvas.Top="42">
-            <Bold>
-                <Run Text="Steam Password"/>
-            </Bold>
-        </Label>
-        <Label Height="20" Canvas.Left="4" Canvas.Top="96" Padding="5,0,0,0">
-            <Bold>
-                <Run Text="Downpatch Folder"/>
-            </Bold>
-        </Label>
-        <StackPanel Orientation="Horizontal" Height="20" Canvas.Left="10" Canvas.Top="126">
-            <Label x:Name="lSelectedFolder" BorderThickness="1" BorderBrush="#FF727272" Height="20" Padding="5,0,5,0" Content="Default folder..." MaxWidth="600" Margin="0,-10,0,10"/>
-            <Button x:Name="bSelectFolder" Click="SelectFolderButton_Click" Height="20" Content="Select Folder" Margin="5,-10,0,10"/>
+            <ComboBox Name="cbDownpatchVersion" SelectionChanged="DownpatchVersionComboBox_SelectionChanged" Height="22" Width="120" Margin="0,5,0,0" />
+        </StackPanel>
+        <StackPanel Canvas.Left="140" Canvas.Top="42">
+            <Label Padding="0,0,0,0">
+                <Bold>
+                    <Run Text="Steam Username"/>
+                </Bold>
+            </Label>
+            <TextBox Name="tbUsername" Background="White" TextChanged="UsernameTextBox_TextChanged" Width="120" Height="22" Margin="0,5,0,0"></TextBox>
+        </StackPanel>
+        <StackPanel Canvas.Left="265" Canvas.Top="42">
+            <Label Padding="0,0,0,0">
+                <Bold>
+                    <Run Text="Steam Password"/>
+                </Bold>
+            </Label>
+            <PasswordBox Name="pbPassword" Background="White" PasswordChanged="PasswordPasswordBox_TextChanged" Width="120" Height="22" Margin="0,5,0,0"></PasswordBox>
+        </StackPanel>
+        <StackPanel Canvas.Left="10" Canvas.Top="90" >
+            <Label Padding="0,0,0,0" ToolTip="Where the downpatch files will be stored. This should NOT be your DOOM Eternal folder.">
+                <Bold>
+                    <Run Text="Downpatch Folder"/>
+                </Bold>
+            </Label>
+            <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                <Label x:Name="lSelectedFolder" BorderThickness="1" BorderBrush="LightGray" Background="White" Padding="2,2,2,0"  Content="default downpatch folder" Width="500" />
+                <Button x:Name="bSelectFolder" Click="SelectFolderButton_Click" Content="Select Folder" Padding="2" Margin="5,0,0,0"/>
+            </StackPanel>
         </StackPanel>
         <Border BorderThickness="1" BorderBrush="#FF727272" Canvas.Left="10" Canvas.Top="179" Width="700" Height="121">
             <Grid>
@@ -53,7 +64,7 @@
                         <ItemsControl ItemsSource="{Binding ConsoleOutput, Mode=OneWay}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding Path=.}" Foreground="White" TextWrapping="Wrap" FontFamily="Consolas"  Padding="5,0,0,0"/>
+                                    <TextBlock Text="{Binding Path=.}" Foreground="White" TextWrapping="Wrap" FontFamily="Consolas" Padding="5,0,0,0"/>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
@@ -67,9 +78,13 @@
             <fa:ImageAwesome Icon="CircleOutlineNotch" Spin="true" Height="10" Width="10" />
             <TextBlock Margin="5,0,0,0">In progress...</TextBlock>
         </StackPanel>
-        <TextBlock Name="tbRequiredNotification" Foreground="Red" FontWeight="Bold" Canvas.Left="252" Canvas.Top="158">* Required items missing</TextBlock>
-        <TextBlock Name="tbUsernameRequired" Foreground="Red" FontWeight="Bold" Canvas.Left="236" Canvas.Top="40">*</TextBlock>
-        <TextBlock Name="tbPasswordRequired" Foreground="Red" FontWeight="Bold" Canvas.Left="358" Canvas.Top="40">*</TextBlock>
-        <TextBlock Name="tbVersionRequired" Foreground="Red" FontWeight="Bold" Canvas.Left="121" Canvas.Top="40">*</TextBlock>
+        <TextBlock Name="tbRequiredNotification" Foreground="#C44D58" FontWeight="Bold" Canvas.Left="252" Canvas.Top="158">* Required items missing</TextBlock>
+        <TextBlock Name="tbUsernameRequired" Foreground="#FF6B6B" FontWeight="Bold" Canvas.Left="236" Canvas.Top="40">*</TextBlock>
+        <TextBlock Name="tbPasswordRequired" Foreground="#FF6B6B" FontWeight="Bold" Canvas.Left="358" Canvas.Top="40">*</TextBlock>
+        <TextBlock Name="tbVersionRequired" Foreground="#FF6B6B" FontWeight="Bold" Canvas.Left="121" Canvas.Top="40">*</TextBlock>
+
+        <Button Name="bCopyToClipboard" Click="CopyToClipboardButton_Click" Canvas.Left="694" Canvas.Top="162" ToolTip="Copy console contents to clipboard.">
+            <fa:FontAwesome Icon="Copy"></fa:FontAwesome>
+        </Button>
     </Canvas>
 </Window>

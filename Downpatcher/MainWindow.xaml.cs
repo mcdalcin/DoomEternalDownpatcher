@@ -14,6 +14,8 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Forms;
+using ColorConverter = System.Windows.Media.ColorConverter;
+using Color = System.Windows.Media.Color;
 
 namespace Downpatcher {
     /// <summary>
@@ -78,7 +80,9 @@ namespace Downpatcher {
                 _console.Output(
                     "Successfully found DOOM Eternal installation folder!");
                 tbRootPath.Inlines.Add(new Bold(new Run("Root folder found: ")) {
-                    Foreground = Brushes.LimeGreen
+                    Foreground = 
+                        new SolidColorBrush(
+                            (Color)ColorConverter.ConvertFromString("#C7F464"))
                 });
                 tbRootPath.Inlines.Add(new Run(doomEternalPath));
                 return doomEternalPath;
@@ -87,7 +91,7 @@ namespace Downpatcher {
                     "ERROR: Could not find DOOM Eternal installation folder!");
                 tbRootPath.Inlines.Add(
                     new Bold(new Run("Unable to find DOOM Eternal root folder.")) {
-                        Foreground = Brushes.Red
+                        Foreground = Brushes.Firebrick
                     });
                 return "";
             }
@@ -111,7 +115,9 @@ namespace Downpatcher {
                         + doomVersion);
                 tbVersion.Inlines.Add(
                     new Bold(new Run("Installed DOOM Eternal version: ") {
-                        Foreground = Brushes.LimeGreen
+                        Foreground =
+                            new SolidColorBrush(
+                                (Color)ColorConverter.ConvertFromString("#C7F464"))
                     }));
                 tbVersion.Inlines.Add(new Run(doomVersion));
             } else {
@@ -119,7 +125,7 @@ namespace Downpatcher {
                     "ERROR: Unable to detect installed DOOM Eternal version.");
                 tbVersion.Inlines.Add(
                     new Bold(new Run("Unable to determine DOOM Eternal version.") {
-                        Foreground = Brushes.Red
+                        Foreground = Brushes.Firebrick
                     }));
                 return "";
             }
@@ -359,6 +365,7 @@ namespace Downpatcher {
 
             lock (_depotDownloaderProcessLock) {
                 _depotDownloaderProcess = new Process();
+
                 System.Windows.Application.Current.Dispatcher.Invoke(
                     () => UpdateDownpatcherButtons());
 
@@ -380,7 +387,8 @@ namespace Downpatcher {
                         while (_depotDownloaderProcess != null
                                && p != null
                                && (character = (char)p.StandardOutput.Read()) >= 0) {
-                            // Accumulate buffer until newline or authentication interaction prompt.
+                            // Accumulate buffer until newline or authentication 
+                            // interaction prompt.
                             bool requiresAuth =
                                 output.ToString().Contains(
                                     DEPOT_DOWNLOADER_AUTH_2FA_REGEX_STRING)
@@ -450,7 +458,7 @@ namespace Downpatcher {
             _depotDownloaderCanceled = true;
             if (_depotDownloaderProcess != null 
                 && !_depotDownloaderProcess.HasExited) {
-                _depotDownloaderProcess.Kill();
+                _depotDownloaderProcess.Kill(true);
                 _depotDownloaderProcess.Close();
             }
             lock (_depotDownloaderProcessLock) {
@@ -486,6 +494,10 @@ namespace Downpatcher {
             object sender, RoutedEventArgs e) {
             _console.Output("Canceling DepotDownloader.");
             KillDepotDownloaderProcess();
+        }
+
+        private void CopyToClipboardButton_Click(object sender, RoutedEventArgs e) {
+
         }
     }
 }

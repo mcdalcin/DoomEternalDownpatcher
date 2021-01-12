@@ -4,6 +4,11 @@
              xmlns:local="clr-namespace:Downpatcher"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-
+        <Style x:Key="DefaultStyle" TargetType="{x:Type Control}">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontFamily" Value="Open Sans" />
+            <Setter Property="FontStyle" Value="Normal" />
+            
+        </Style>
     </Application.Resources>
 </Application>
