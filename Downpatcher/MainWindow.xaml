@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:fa="http://schemas.fontawesome.io/icons/"
+        xmlns:fa5="http://schemas.fontawesome.com/icons/"
         xmlns:local="clr-namespace:Downpatcher"
         Style="{StaticResource DefaultStyle}"
         mc:Ignorable="d"
@@ -11,7 +11,7 @@
         ResizeMode="CanMinimize"
         Title="DOOM Eternal Steam Downpatcher" Height="350" Width="735">
     <Canvas>
-        <Image Source="Images/bg.png" Width="1400" Canvas.Left="-430" Canvas.Top="-280" Opacity=".05"></Image>
+        <Image Source="Images/bg.png" Width="1400" Canvas.Left="-430" Canvas.Top="-280" Opacity=".1"></Image>
         <StackPanel Orientation="Horizontal" Canvas.Left="10" Canvas.Top="10">
             <Border BorderThickness="1" BorderBrush="LightGray">
                 <TextBlock Name="tbRootPath" TextTrimming="WordEllipsis" Background="White" FontSize="10" Width="400" Height="14" Padding="2,1,0,0" />
@@ -36,7 +36,7 @@
                     <Run Text="Steam Username"/>
                 </Bold>
             </Label>
-            <TextBox Name="tbUsername" Background="White" TextChanged="UsernameTextBox_TextChanged" Width="120" Height="22" Margin="0,5,0,0"></TextBox>
+            <TextBox Name="tbUsername" Background="White" TextChanged="UsernameTextBox_TextChanged" Width="120" Height="22" Margin="0,5,0,0" Padding="2,3,0,0"></TextBox>
         </StackPanel>
         <StackPanel Canvas.Left="265" Canvas.Top="42">
             <Label Padding="0,0,0,0">
@@ -44,7 +44,7 @@
                     <Run Text="Steam Password"/>
                 </Bold>
             </Label>
-            <PasswordBox Name="pbPassword" Background="White" PasswordChanged="PasswordPasswordBox_TextChanged" Width="120" Height="22" Margin="0,5,0,0"></PasswordBox>
+            <PasswordBox Name="pbPassword" Background="White" PasswordChanged="PasswordPasswordBox_TextChanged" Width="120" Height="22" Margin="0,5,0,0" Padding="2,3,0,0"></PasswordBox>
         </StackPanel>
         <StackPanel Canvas.Left="10" Canvas.Top="90" >
             <Label Padding="0,0,0,0" ToolTip="Where the downpatch files will be stored. This should NOT be your DOOM Eternal folder.">
@@ -75,7 +75,7 @@
         <Button Name="bStartDownpatcher" Background="LightGreen" Click="StartDownpatcherButton_Click" Canvas.Left="10" Canvas.Top="144" Padding="5,0" Height="30" IsEnabled="False">Start Downpatcher</Button>
         <Button Name="bCancelDownpatcher" Background="IndianRed" Click="CancelDownpatcherButton_Click" Canvas.Left="126" Canvas.Top="144" Padding="5,0" Height="30" IsEnabled="False">Cancel Downpatcher</Button>
         <StackPanel Name="spInProgress" Visibility="Hidden" Orientation="Horizontal" Canvas.Left="252" Canvas.Top="158" Margin="0,1,0,0">
-            <fa:ImageAwesome Icon="CircleOutlineNotch" Spin="true" Height="10" Width="10" />
+            <fa5:ImageAwesome Icon="Solid_CircleNotch" Spin="true" Height="10" Width="10" />
             <TextBlock Margin="5,0,0,0">In progress...</TextBlock>
         </StackPanel>
         <TextBlock Name="tbRequiredNotification" Foreground="#C44D58" FontWeight="Bold" Canvas.Left="252" Canvas.Top="158">* Required items missing</TextBlock>
@@ -83,8 +83,10 @@
         <TextBlock Name="tbPasswordRequired" Foreground="#FF6B6B" FontWeight="Bold" Canvas.Left="358" Canvas.Top="40">*</TextBlock>
         <TextBlock Name="tbVersionRequired" Foreground="#FF6B6B" FontWeight="Bold" Canvas.Left="121" Canvas.Top="40">*</TextBlock>
 
-        <Button Name="bCopyToClipboard" Click="CopyToClipboardButton_Click" Canvas.Left="694" Canvas.Top="162" ToolTip="Copy console contents to clipboard.">
-            <fa:FontAwesome Icon="Copy"></fa:FontAwesome>
+        <Button Name="bCopyToClipboard" Click="CopyToClipboardButton_Click" Canvas.Left="692" Canvas.Top="161" ToolTip="Copy console contents to clipboard." Width="18">
+            <fa5:FontAwesome Icon="Regular_Copy"></fa5:FontAwesome>
         </Button>
+        
+        <TextBlock Canvas.Left="685" Canvas.Top="10"><Hyperlink Click="Info_Click">Help</Hyperlink></TextBlock>
     </Canvas>
 </Window>

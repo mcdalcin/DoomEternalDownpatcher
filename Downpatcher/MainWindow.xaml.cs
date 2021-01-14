@@ -176,7 +176,7 @@ namespace Downpatcher {
                 count++;
             }
             _console.Output(
-                "There are " + count + " available downpatch versions. Please pick"
+                "There are " + count + " available downpatch versions. Please pick "
                     + "one above.");
         }
 
@@ -221,7 +221,6 @@ namespace Downpatcher {
                 cbDownpatchVersion.SelectedItem == null
                     ? Visibility.Visible
                     : Visibility.Hidden;
-
             tbRequiredNotification.Visibility =
                 tbUsernameRequired.Visibility == Visibility.Hidden
                     && tbPasswordRequired.Visibility == Visibility.Hidden
@@ -497,7 +496,12 @@ namespace Downpatcher {
         }
 
         private void CopyToClipboardButton_Click(object sender, RoutedEventArgs e) {
+            System.Windows.Forms.Clipboard.SetText(_console.GetDebugString());
+        }
 
+        private void Info_Click(object sender, RoutedEventArgs e) {
+            InfoWindow info = new InfoWindow();
+            info.Show();
         }
     }
 }

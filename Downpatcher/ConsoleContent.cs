@@ -40,6 +40,15 @@ public class ConsoleContent : INotifyPropertyChanged {
         scroller.ScrollToBottom();
     }
 
+    public string GetDebugString() {
+        string output = "";
+        foreach (string s in ConsoleOutput) {
+            output += s;
+            output += "\n";
+        }
+        return output;
+    }
+
     private void FlushInput() {
         ConsoleOutput.Add("> " + ConsoleInput);
         ConsoleInput = string.Empty;

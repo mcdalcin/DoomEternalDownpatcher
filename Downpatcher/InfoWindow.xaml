@@ -1,0 +1,39 @@
+﻿<Window x:Class="Downpatcher.InfoWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:fa5="http://schemas.fontawesome.com/icons/"
+        xmlns:local="clr-namespace:Downpatcher"
+        Style="{StaticResource DefaultStyle}"
+        mc:Ignorable="d"
+        ResizeMode="CanMinimize"
+        Title="DOOM Eternal Steam Downpatcher | Information" Height="520" Width="600">
+    <Canvas>
+        <Image Source="Images/bg.png" Width="1400" Canvas.Left="-430" Canvas.Top="-280" Opacity=".1"></Image>
+        <StackPanel Margin="10" MaxWidth="550">
+            <TextBlock><Run FontWeight="Bold" FontSize="20">INSTRUCTIONS</Run></TextBlock>
+            <ItemsControl Margin="20,10,0,0" FontSize="14" FontWeight="Light">
+                <TextBlock TextWrapping="Wrap"><Run FontWeight="SemiBold">1.</Run> Ensure your DOOM Eternal Root Folder is found and your installed version is detected. It should look something like this:</TextBlock>
+                <TextBlock></TextBlock>
+                <Border BorderBrush="LightGray" BorderThickness="1">
+                    <Image Source="Images/info_1.png"></Image>
+                </Border>
+                <TextBlock></TextBlock>
+                <TextBlock TextWrapping="Wrap"><Run FontWeight="SemiBold">2.</Run> Fill in your desired downpatch version, your steam username, steam password, and the downpatch folder where we should download the downpatch files to.</TextBlock>
+                <TextBlock></TextBlock>
+                <TextBlock TextWrapping="Wrap"><Run FontWeight="SemiBold">3.</Run> Once all your information is filled in, hit the <Run FontWeight="Bold">START DOWNPATCHER</Run> button. You should see progress in the console below. You may be asked for your authentication code from Steam, and if so, please enter it in the popup dialog.</TextBlock>
+                <TextBlock></TextBlock>
+                <TextBlock TextWrapping="Wrap"><Run FontWeight="SemiBold">4.</Run> Wait until all files are downloaded and the downpatching is complete.</TextBlock>
+                <TextBlock></TextBlock>
+                <TextBlock TextWrapping="Wrap"><Run FontWeight="SemiBold">5.</Run> Finally, go to your downpatch folder and copy all files over to your DOOM Eternal folder (the Root folder listed above). Your game should now be downpatched.</TextBlock>
+            </ItemsControl>
+            <TextBlock></TextBlock>
+            <TextBlock></TextBlock>
+            <TextBlock TextWrapping="Wrap" FontWeight="Bold" FontSize="14">All code is available open-source on github <Hyperlink NavigateUri="https://github.com/mcdalcin/DoomEternalDownpatcher" RequestNavigate="Hyperlink_RequestNavigate">here</Hyperlink>. Please feel free to vet it yourselves.</TextBlock>
+            <TextBlock></TextBlock>
+            <TextBlock TextWrapping="Wrap"><Run FontWeight="Bold" FontSize="12">If you run into trouble or encounter any bugs, contact Xiae#5944 on discord with your console output. The small button near the console will copy all the console output to your clipboard.</Run></TextBlock>
+            <TextBlock></TextBlock>
+        </StackPanel>
+    </Canvas>
+</Window>
