@@ -4,7 +4,6 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:fa5="http://schemas.fontawesome.com/icons/"
-        xmlns:local="clr-namespace:Downpatcher"
         Style="{StaticResource DefaultStyle}"
         mc:Ignorable="d"
         Closing="Window_Closing"
@@ -75,8 +74,8 @@
         <Button Name="bStartDownpatcher" Background="LightGreen" Click="StartDownpatcherButton_Click" Canvas.Left="10" Canvas.Top="144" Padding="5,0" Height="30" IsEnabled="False">Start Downpatcher</Button>
         <Button Name="bCancelDownpatcher" Background="IndianRed" Click="CancelDownpatcherButton_Click" Canvas.Left="126" Canvas.Top="144" Padding="5,0" Height="30" IsEnabled="False">Cancel Downpatcher</Button>
         <StackPanel Name="spInProgress" Visibility="Hidden" Orientation="Horizontal" Canvas.Left="252" Canvas.Top="158" Margin="0,1,0,0">
-            <fa5:ImageAwesome Icon="Solid_CircleNotch" Spin="true" Height="10" Width="10" />
-            <TextBlock Margin="5,0,0,0">In progress...</TextBlock>
+            <fa5:ImageAwesome Icon="Solid_CircleNotch" Spin="True" Height="12" Width="12" />
+            <TextBlock Margin="5,0,0,0"> In progress...</TextBlock>
         </StackPanel>
         <TextBlock Name="tbRequiredNotification" Foreground="#C44D58" FontWeight="Bold" Canvas.Left="252" Canvas.Top="158">* Required items missing</TextBlock>
         <TextBlock Name="tbUsernameRequired" Foreground="#FF6B6B" FontWeight="Bold" Canvas.Left="236" Canvas.Top="40">*</TextBlock>
