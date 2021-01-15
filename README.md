@@ -2,7 +2,7 @@
 # DoomEternalDownpatcher
 A Downpatcher for DOOM Eternal. Steam only.
 
-![Preview](https://github.com/mcdalcin/DoomEternalDownpatcher/blob/master/Images/mainPreview.png?raw=true)
+![Preview](https://github.com/mcdalcin/DoomEternalDownpatcher/blob/master/Images/mainPreview.PNG?raw=true)
 
 
 Made with love from Xiae.
@@ -13,7 +13,7 @@ Made with love from Xiae.
 
 Instructions included in the application under the Help link in the top right.
 
-![Instructions](https://github.com/mcdalcin/DoomEternalDownpatcher/blob/master/Images/instructions.png?raw=true)
+![Instructions](https://github.com/mcdalcin/DoomEternalDownpatcher/blob/master/Images/instructions.PNG?raw=true)
 
 ## FOR DEVELOPERS ONLY
 
