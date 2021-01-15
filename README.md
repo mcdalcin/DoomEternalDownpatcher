@@ -1,5 +1,5 @@
 
-# DoomEternalDownpatcher
+# DOOM Eternal Steam Downpatcher
 A Downpatcher for DOOM Eternal. Steam only.
 
 ![Preview](https://github.com/mcdalcin/DoomEternalDownpatcher/blob/master/Images/mainPreview.PNG?raw=true)
@@ -17,7 +17,7 @@ Instructions included in the application under the Help link in the top right.
 
 ## FOR DEVELOPERS ONLY
 
-## Adding a new version
+## ADDING SUPPORT FOR NEW VERSION
 
 When adding in a new version, two things must be done.
 
@@ -26,7 +26,11 @@ When adding in a new version, two things must be done.
 
 ### ADDING IN THE FILELIST
 
-Using the FilelistGenerator program, create a filelist.txt for the new patch. Rename this filelist.txt to the new_version_name.txt and add it to the data/ folder.
+The FileListGenerator makes this part very easy. Simply get the patch notes page from [SteamDB](https://steamdb.info/app/782330/patchnotes/) and enter it into the FileListGenerator. Follow the directions carefully. An example usage with the December 9th 2020 patch is below.
+
+![FileListGenerator](https://github.com/mcdalcin/DoomEternalDownpatcher/blob/master/Images/fileListGenerator.PNG?raw=true)
+
+Rename the filelist.txt created to new_version_name.txt and add it to the data folder in this repository.
 
 ### MODIFY VERSIONS.JSON
 
