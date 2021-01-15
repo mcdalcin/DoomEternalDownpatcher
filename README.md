@@ -2,18 +2,18 @@
 # DoomEternalDownpatcher
 A Downpatcher for DOOM Eternal. Steam only.
 
-![Preview](https://github.com/mcdalcin/DoomEternalDownpatcher/blob/master/mainPreview.jpg?raw=true)
+![Preview](https://github.com/mcdalcin/DoomEternalDownpatcher/blob/master/Images/mainPreview.png?raw=true)
 
 
 Made with love from Xiae.
 
-  ![XiaeKawaii](https://github.com/mcdalcin/DoomEternalDownpatcher/blob/master/kawaii.jpg?raw=true)
+  ![XiaeKawaii](https://github.com/mcdalcin/DoomEternalDownpatcher/blob/master/Images/kawaii.jpg?raw=true)
 
 ## INSTRUCTIONS
 
 Instructions included in the application under the Help link in the top right.
 
-![Instructions](https://github.com/mcdalcin/DoomEternalDownpatcher/blob/master/instructions.jpg?raw=true)
+![Instructions](https://github.com/mcdalcin/DoomEternalDownpatcher/blob/master/Images/instructions.png?raw=true)
 
 ## FOR DEVELOPERS ONLY
 
