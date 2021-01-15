@@ -15,7 +15,7 @@ Instructions included in the application under the Help link in the top right.
 
 ![Instructions](https://github.com/mcdalcin/DoomEternalDownpatcher/blob/master/Images/instructions.PNG?raw=true)
 
-## FOR DEVELOPERS ONLY
+## BELOW IS FOR DEVELOPERS ONLY
 
 ## ADDING SUPPORT FOR NEW VERSION
 
