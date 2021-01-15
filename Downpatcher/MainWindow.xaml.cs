@@ -18,11 +18,7 @@ using ColorConverter = System.Windows.Media.ColorConverter;
 using Color = System.Windows.Media.Color;
 
 namespace Downpatcher {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window {
-
         private const string DOOM_ETERNAL_EXE_STRING = "DOOMEternalx64vk.exe";
         private const string DOOM_ETERNAL_DATA_BASE_URL =
             "https://raw.githubusercontent.com/mcdalcin/DoomEternalDownpatcher"
@@ -58,10 +54,17 @@ namespace Downpatcher {
             _doomEternalPath = InitializeDoomRootPath();
             _doomEternalDetectedVersion = InitializeDoomVersion();
             InitializeDoomDownpatchVersions();
-            InitializeDoomDownpatchFolder();
             InitializeDepotDownloader();
+
+            // Initialize the default DOOM Eternal downpatch folder.
+            _doomEternalDownpatchFolder = 
+                Directory.GetCurrentDirectory() + @"\DOWNPATCH_FILES";
+            lSelectedFolder.Content = new Run(_doomEternalDownpatchFolder);
         }
 
+        /** 
+         * Returns the DOOM Eternal root folder path or an empty string if not found.
+         */
         private string InitializeDoomRootPath() {
             // Get steam base path from registry.
             RegistryKey localKey =
@@ -97,8 +100,11 @@ namespace Downpatcher {
             }
         }
 
+        /** 
+         * Returns the installed DOOM Eternal version or an empty string if unable to
+         * detect it.
+         */
         private string InitializeDoomVersion() {
-            // Get size of Doom Eternal exe.
             string doomEternalExePath =
                 _doomEternalPath + @"\" + DOOM_ETERNAL_EXE_STRING;
 
@@ -132,6 +138,10 @@ namespace Downpatcher {
             return doomVersion;
         }
 
+        /** 
+         * Ensure the most updated version of DepotDownloader is installed and
+         * ready to use.
+         */
         private void InitializeDepotDownloader() {
             // Check for latest depot downloader release located in current working 
             // directory.
@@ -178,24 +188,6 @@ namespace Downpatcher {
             _console.Output(
                 "There are " + count + " available downpatch versions. Please pick "
                     + "one above.");
-        }
-
-        private void InitializeDoomDownpatchFolder() {
-            // For now, let's use the current folder + DOWNPATCH_FILES.
-            _doomEternalDownpatchFolder =
-                Directory.GetCurrentDirectory() + @"\DOWNPATCH_FILES";
-            lSelectedFolder.Content = new Run(_doomEternalDownpatchFolder);
-        }
-
-        private void SelectFolderButton_Click(object sender, RoutedEventArgs e) {
-            FolderBrowserDialog selectFolderDialog = new FolderBrowserDialog();
-            selectFolderDialog.SelectedPath = Directory.GetCurrentDirectory();
-            if (selectFolderDialog.ShowDialog() 
-                    == System.Windows.Forms.DialogResult.OK) {
-                _doomEternalDownpatchFolder = selectFolderDialog.SelectedPath;
-                lSelectedFolder.Content = _doomEternalDownpatchFolder;
-            }
-            UpdateDownpatcherButtons();
         }
 
         private void UpdateDownpatcherButtons() {
@@ -273,76 +265,17 @@ namespace Downpatcher {
             return "";
         }
 
-        private void StartDownpatcherButton_Click(object sender, RoutedEventArgs e) {
-            // TODO: Add better thread-safety instead of relying on 
-            // _depotDownloaderProcess being null.
-            _console.Output("Beginning to downpatch!");
-            _depotDownloaderCanceled = false;
-            DoomVersions.DoomVersion downpatchVersion = null;
-            List<DoomVersions.DoomVersion> intermediateVersions =
-                new List<DoomVersions.DoomVersion>();
-            foreach (var version in _availableVersions.versions) {
-                // Get all versions in range (downpatchVersion, installedVersion].
-                if (downpatchVersion != null) {
-                    intermediateVersions.Add(version);
-                }
-                if (version.name.Equals(cbDownpatchVersion.SelectedItem.ToString())) {
-                    downpatchVersion = version;
-                }
-            }
-
-            // Create file list from all intermediate version file lists.
-            HashSet<string> aggregatedFiles = new HashSet<string>();
-            foreach (var version in intermediateVersions) {
-                string[] files = GetFileList(version.name);
-                foreach (string file in files) {
-                    aggregatedFiles.Add(file);
-                }
-            }
-
-            // Write aggregated file list to output filelist.txt.
-            string fileListPath = Directory.GetCurrentDirectory() + @"\filelist.txt";
-            StreamWriter streamWriter = new StreamWriter(fileListPath, false);
-            foreach (string file in aggregatedFiles) {
-                streamWriter.WriteLine(file);
-            }
-            streamWriter.Flush();
-            streamWriter.Close();
-
-            _console.Output("Generated filelist.txt.");
-
-            // Using the downpatchVersion manifestIds and the generated filelist.txt,
-            // we now need to call DepotDownloader.
-            string username = tbUsername.Text;
-            string password = pbPassword.Password;
-
-            string[] depotIds = {
-                "782332", "782333", "782334", "782335", "782336", "782337", "782338",
-                "782339"
-            };
-
-            // Run DepotDownloader on a new thread to not block the UI-thread. 
-            new Thread(() => {
-                for (int i = 0; i < depotIds.Length; i++) {
-                    ExecuteDepotDownload(
-                        depotIds[i],
-                        downpatchVersion.manifestIds[i],
-                        fileListPath,
-                        username,
-                        password);
-                    if (_depotDownloaderCanceled) {
-                        return;
-                    }
-                }
-            }).Start();
-        }
-
         private void ExecuteDepotDownload(
             string depotId,
             string manifestId,
             string fileListPath,
             string username,
             string password) {
+            
+            // TODO(xiae): Starting up a command prompt to run a dotnet dll from
+            // a dotnet app seems like a circular process. Can we do better and call
+            // the dotnet dll ourselves?
+
             ProcessStartInfo processInfo;
 
             string command =
@@ -435,9 +368,12 @@ namespace Downpatcher {
                 || output.Contains(DEPOT_DOWNLOADER_AUTH_CODE_REGEX_STRING);
             if (requiresAuth) {
                 System.Windows.Application.Current.Dispatcher.Invoke(() => {
-                    AuthenticationDialog authenticationDialog = new AuthenticationDialog();
+                    AuthenticationDialog authenticationDialog = 
+                        new AuthenticationDialog();
                     if (authenticationDialog.ShowDialog() == true) {
-                        _console.Output("Using authentication code: " + authenticationDialog.AuthCode);
+                        _console.Output(
+                            "Using authentication code: " 
+                                + authenticationDialog.AuthCode);
 
                         StreamWriter sw = _depotDownloaderProcess.StandardInput;
                         sw.WriteLine(authenticationDialog.AuthCode);
@@ -445,7 +381,7 @@ namespace Downpatcher {
                     } else {
                         _console.Output(
                             "Authentication code not entered. Shutting down "
-                            + "DepotDownloader.");
+                                + "DepotDownloader.");
                         KillDepotDownloaderProcess();
                     }
                 });
@@ -462,6 +398,79 @@ namespace Downpatcher {
             }
             lock (_depotDownloaderProcessLock) {
                 _depotDownloaderProcess = null;
+            }
+            UpdateDownpatcherButtons();
+        }
+
+        private void StartDownpatcherButton_Click(object sender, RoutedEventArgs e) {
+            _console.Output("Beginning to downpatch!");
+            _depotDownloaderCanceled = false;
+            DoomVersions.DoomVersion downpatchVersion = null;
+            List<DoomVersions.DoomVersion> intermediateVersions =
+                new List<DoomVersions.DoomVersion>();
+            foreach (var version in _availableVersions.versions) {
+                // Get all versions in range (downpatchVersion, installedVersion].
+                if (downpatchVersion != null) {
+                    intermediateVersions.Add(version);
+                }
+                if (version.name.Equals(cbDownpatchVersion.SelectedItem.ToString())) {
+                    downpatchVersion = version;
+                }
+            }
+
+            // Create file list from all intermediate version file lists.
+            HashSet<string> aggregatedFiles = new HashSet<string>();
+            foreach (var version in intermediateVersions) {
+                string[] files = GetFileList(version.name);
+                foreach (string file in files) {
+                    aggregatedFiles.Add(file);
+                }
+            }
+
+            // Write aggregated file list to output filelist.txt.
+            string fileListPath = Directory.GetCurrentDirectory() + @"\filelist.txt";
+            StreamWriter streamWriter = new StreamWriter(fileListPath, false);
+            foreach (string file in aggregatedFiles) {
+                streamWriter.WriteLine(file);
+            }
+            streamWriter.Flush();
+            streamWriter.Close();
+
+            _console.Output("Generated filelist.txt.");
+
+            // Using the downpatchVersion manifestIds and the generated filelist.txt,
+            // we now need to call DepotDownloader.
+            string username = tbUsername.Text;
+            string password = pbPassword.Password;
+
+            string[] depotIds = {
+                "782332", "782333", "782334", "782335", "782336", "782337", "782338",
+                "782339"
+            };
+
+            // Run DepotDownloader on a new thread to not block the UI-thread. 
+            new Thread(() => {
+                for (int i = 0; i < depotIds.Length; i++) {
+                    ExecuteDepotDownload(
+                        depotIds[i],
+                        downpatchVersion.manifestIds[i],
+                        fileListPath,
+                        username,
+                        password);
+                    if (_depotDownloaderCanceled) {
+                        return;
+                    }
+                }
+            }).Start();
+        }
+
+        private void SelectFolderButton_Click(object sender, RoutedEventArgs e) {
+            FolderBrowserDialog selectFolderDialog = new FolderBrowserDialog();
+            selectFolderDialog.SelectedPath = Directory.GetCurrentDirectory();
+            if (selectFolderDialog.ShowDialog()
+                    == System.Windows.Forms.DialogResult.OK) {
+                _doomEternalDownpatchFolder = selectFolderDialog.SelectedPath;
+                lSelectedFolder.Content = _doomEternalDownpatchFolder;
             }
             UpdateDownpatcherButtons();
         }
