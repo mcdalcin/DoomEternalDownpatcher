@@ -34,7 +34,7 @@ Rename the filelist.txt created to new_version_name.txt and add it to the data f
 
 ### MODIFY VERSIONS.JSON
 
-Eventually, this part will be automated, but for now we must do it manually.
+**Eventually, this part will be automated, but for now we must do it manually.**
 
 Each version will contain a new manifest id for each depot that has changed.
 
