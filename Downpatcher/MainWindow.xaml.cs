@@ -39,7 +39,7 @@ namespace Downpatcher {
         private volatile string _doomEternalDownpatchFolder = "";
         private volatile string _depotDownloaderInstallPath = "";
 
-        private DoomVersions _availableVersions;
+        private DoomVersions _availableVersions = new DoomVersions();
 
         private ConsoleContent _console;
 
@@ -108,6 +108,11 @@ namespace Downpatcher {
                 _doomEternalPath + @"\" + DOOM_ETERNAL_EXE_STRING;
 
             if (!File.Exists(doomEternalExePath)) {
+                _console.Output("ERROR: DOOM Eternal executable not found.");
+                tbVersion.Inlines.Add(
+                    new Bold(new Run("ERROR: No DOOM Eternal executable detected.") {
+                        Foreground = Brushes.Firebrick
+                    }));
                 return "";
             }
 
@@ -146,9 +151,18 @@ namespace Downpatcher {
             // directory.
             using (var webClient = new WebClient()) {
                 webClient.Headers.Add("User-Agent: Other");
-                dynamic json =
-                    JsonConvert.DeserializeObject(
-                        webClient.DownloadString(DEPOT_DOWNLOADER_RELEASE_URL));
+                string jsonString;
+                try {
+                    jsonString =
+                        webClient.DownloadString(DEPOT_DOWNLOADER_RELEASE_URL);
+                } catch (WebException e) {
+                    _console.Output(
+                        "ERROR: Unable to download DepotDownloader metadata. Please " +
+                        "make sure there is an active network and this program is " +
+                        "not being blocked by your firewall or antivirus.");
+                    return;
+                }
+                dynamic json = JsonConvert.DeserializeObject(jsonString);
                 if (json.Count == 0) {
                     _console.Output("ERROR: No version of depot downloader found.");
                     return;
@@ -166,9 +180,17 @@ namespace Downpatcher {
                         "New DepotDownloader version detected. Installing " + name
                             + ".");
                     _console.Output("Downloading " + downloadUrl);
-                    webClient.DownloadFile(
-                        downloadUrl,
-                        Directory.GetCurrentDirectory() + @"\" + fileName);
+                    try {
+                        webClient.DownloadFile(
+                            downloadUrl,
+                            Directory.GetCurrentDirectory() + @"\" + fileName);
+                    } catch (WebException e) {
+                        _console.Output(
+                            "ERROR: Unable to download DepotDownloader. Please " +
+                            "make sure there is an active network and this " +
+                            "program is not being blocked by your firewall or " +
+                            "antivirus.");
+                    }
                     _console.Output("Unpacking downloaded files.");
                     ZipFile.ExtractToDirectory(
                         fileName, _depotDownloaderInstallPath);
@@ -244,9 +266,18 @@ namespace Downpatcher {
          */
         private string[] GetFileList(string versionName) {
             using (var webClient = new WebClient()) {
-                string files =
-                    webClient.DownloadString(
+                string files;
+                try {
+                    files = webClient.DownloadString(
                         DOOM_ETERNAL_DATA_BASE_URL + versionName + ".txt");
+                } catch (WebException e) {
+                    _console.Output(
+                        "ERROR: Unable to download filelist for " + versionName +
+                        ". Please make sure there is an active network and this " +
+                        "program is not being blocked by your firewall or " +
+                        "antivirus.");
+                    return new string[0];
+                }
                 // Split files on each newline.
                 return files.Split(
                     new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
@@ -255,7 +286,17 @@ namespace Downpatcher {
 
         private string DetermineDoomVersion(long exeSize) {
             using (var webClient = new WebClient()) {
-                var json = webClient.DownloadString(DOOM_ETERNAL_VERSION_URL);
+                string json;
+                try {
+                    json = webClient.DownloadString(DOOM_ETERNAL_VERSION_URL);
+
+                } catch (WebException e) {
+                    _console.Output(
+                        "ERROR: Unable to download versioning metadata. Please " +
+                        "make sure there is an active network and this program is " +
+                        "not being blocked by your firewall or antivirus.");
+                    return "";
+                }
                 _availableVersions =
                     JsonConvert.DeserializeObject<DoomVersions>(json);
                 foreach (var version in _availableVersions.versions) {
@@ -432,8 +473,10 @@ namespace Downpatcher {
 
         private void StartDownpatcherButton_Click(object sender, RoutedEventArgs e) {
             _console.Output("Beginning to downpatch.");
-            _console.Output("Clearing out downpatch folder.");
-            Directory.Delete(_doomEternalDownpatchFolder, true);
+            if (Directory.Exists(_doomEternalDownpatchFolder)) {
+                _console.Output("Clearing out downpatch folder.");
+                Directory.Delete(_doomEternalDownpatchFolder, true);
+            }
             DoomVersions.DoomVersion downpatchVersion = null;
             List<DoomVersions.DoomVersion> intermediateVersions =
                 new List<DoomVersions.DoomVersion>();

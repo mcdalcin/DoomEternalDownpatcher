@@ -6,6 +6,6 @@
             public string[] manifestIds;
         }
 
-        public DoomVersion[] versions;
+        public DoomVersion[] versions = new DoomVersion[0];
     }
 }
