@@ -25,8 +25,8 @@ namespace Downpatcher {
                 + "/master/data/";
         private const string DOOM_ETERNAL_VERSION_URL =
             DOOM_ETERNAL_DATA_BASE_URL + "versions.json";
-        private const string DEPOT_DOWNLOADER_LATEST_URL =
-            "https://api.github.com/repos/SteamRE/DepotDownloader/releases/latest";
+        private const string DEPOT_DOWNLOADER_RELEASE_URL =
+            "https://api.github.com/repos/SteamRE/DepotDownloader/releases";
         private const string DEPOT_DOWNLOADER_ERROR_STRING = "Error";
         private const string DEPOT_DOWNLOADER_AUTH_2FA_REGEX_STRING =
             "Please enter your 2 factor auth code from your authenticator app";
@@ -38,7 +38,6 @@ namespace Downpatcher {
 
         private volatile string _doomEternalDownpatchFolder = "";
         private volatile string _depotDownloaderInstallPath = "";
-        private volatile bool _depotDownloaderCanceled = false;
 
         private DoomVersions _availableVersions;
 
@@ -149,10 +148,14 @@ namespace Downpatcher {
                 webClient.Headers.Add("User-Agent: Other");
                 dynamic json =
                     JsonConvert.DeserializeObject(
-                        webClient.DownloadString(DEPOT_DOWNLOADER_LATEST_URL));
-                string name = json.name;
-                string fileName = json.assets[0].name;
-                string downloadUrl = json.assets[0].browser_download_url;
+                        webClient.DownloadString(DEPOT_DOWNLOADER_RELEASE_URL));
+                if (json.Count == 0) {
+                    _console.Output("ERROR: No version of depot downloader found.");
+                    return;
+                }
+                string name = json[0].name;
+                string fileName = json[0].assets[0].name;
+                string downloadUrl = json[0].assets[0].browser_download_url;
                 _depotDownloaderInstallPath =
                     Directory.GetCurrentDirectory() + @"\"
                         + Path.GetFileNameWithoutExtension(fileName);
@@ -265,13 +268,21 @@ namespace Downpatcher {
             return "";
         }
 
-        private void ExecuteDepotDownload(
-            string depotId,
-            string manifestId,
+        private void ExecuteDepotDownloads(
+            string[] depotIds,
+            string[] manifestIds,
             string fileListPath,
             string username,
             string password) {
             
+            if (depotIds.Length != manifestIds.Length) {
+                _console.Output(
+                    "ERROR: Unable to execute depot downloads. Non-matching " +
+                    "number of depots and manifests (" + depotIds.Length + ", " + 
+                    manifestIds.Length + ")");
+                return;
+            }
+
             // TODO(xiae): Starting up a command prompt to run a dotnet dll from
             // a dotnet app seems like a circular process. Can we do better and call
             // the dotnet dll ourselves?
@@ -280,17 +291,31 @@ namespace Downpatcher {
 
             string command =
                 "dotnet.exe " + _depotDownloaderInstallPath
-                + @"\DepotDownloader.dll -app 782330 -depot " + depotId
-                + " -manifest " + manifestId
+                + @"\DepotDownloader.dll" 
+                + " -app 782330"
                 + " -username " + username
                 + " -password " + password
+                + " -remember-password"
+                + " -max-servers 16"
+                + " -max-downloads 16"
+                + " -validate"
                 + " -filelist \"" + fileListPath
                 + "\" -dir \"" + _doomEternalDownpatchFolder + "\"";
+
+            command += " -depot";
+            foreach (string depotId in depotIds) {
+                command += " " + depotId;
+            }
+
+            command += " -manifest";
+            foreach (string manifestId in manifestIds) {
+                command += " " + manifestId;
+            }
 
             processInfo = new ProcessStartInfo("cmd.exe", "/c " + command);
             processInfo.CreateNoWindow = true;
             processInfo.UseShellExecute = false;
-            // *** Redirect the output ***
+            // Redirect command prompt output.
             processInfo.RedirectStandardError = true;
             processInfo.RedirectStandardOutput = true;
             processInfo.RedirectStandardInput = true;
@@ -344,6 +369,10 @@ namespace Downpatcher {
                 _depotDownloaderProcess.BeginErrorReadLine();
                 _depotDownloaderProcess.WaitForExit();
             }
+
+            // Notify the application that the process has ended.
+            System.Windows.Application.Current.Dispatcher.Invoke(
+                () => KillDepotDownloaderProcess());
         }
 
         private void HandleDepotDownloaderOutput(string output) {
@@ -390,7 +419,6 @@ namespace Downpatcher {
 
         /** Must be called from the UI-thread. */
         private void KillDepotDownloaderProcess() {
-            _depotDownloaderCanceled = true;
             if (_depotDownloaderProcess != null 
                 && !_depotDownloaderProcess.HasExited) {
                 _depotDownloaderProcess.Kill(true);
@@ -403,8 +431,9 @@ namespace Downpatcher {
         }
 
         private void StartDownpatcherButton_Click(object sender, RoutedEventArgs e) {
-            _console.Output("Beginning to downpatch!");
-            _depotDownloaderCanceled = false;
+            _console.Output("Beginning to downpatch.");
+            _console.Output("Clearing out downpatch folder.");
+            Directory.Delete(_doomEternalDownpatchFolder, true);
             DoomVersions.DoomVersion downpatchVersion = null;
             List<DoomVersions.DoomVersion> intermediateVersions =
                 new List<DoomVersions.DoomVersion>();
@@ -450,17 +479,12 @@ namespace Downpatcher {
 
             // Run DepotDownloader on a new thread to not block the UI-thread. 
             new Thread(() => {
-                for (int i = 0; i < depotIds.Length; i++) {
-                    ExecuteDepotDownload(
-                        depotIds[i],
-                        downpatchVersion.manifestIds[i],
-                        fileListPath,
-                        username,
-                        password);
-                    if (_depotDownloaderCanceled) {
-                        return;
-                    }
-                }
+                ExecuteDepotDownloads(
+                    depotIds,
+                    downpatchVersion.manifestIds,
+                    fileListPath,
+                    username,
+                    password);
             }).Start();
         }
 
