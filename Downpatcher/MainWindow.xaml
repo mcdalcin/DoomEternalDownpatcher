@@ -15,7 +15,7 @@
             <Border BorderThickness="1" BorderBrush="LightGray">
                 <TextBlock Name="tbRootPath" TextTrimming="WordEllipsis" Background="White" FontSize="10" Width="400" Height="14" Padding="2,1,0,0" />
             </Border>
-            <Border BorderThickness="1" BorderBrush="LightGray" Background="White" Padding="2,0,5,0" Canvas.Left="417" Canvas.Top="10" Margin="5,0,0,0">
+            <Border BorderThickness="1" BorderBrush="LightGray" Background="White" Padding="2,0,5,0" Canvas.Left="417" Canvas.Top="10" Margin="5,0,0,0" MinWidth="150">
                 <Label Height="14" Padding="2,1,0,0">
                     <TextBlock Name="tbVersion" FontSize="10" />
                 </Label>

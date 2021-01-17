@@ -73,10 +73,8 @@ namespace Downpatcher {
             if (localKey == null) {
                 return "";
             }
-
             string steamPath = localKey.GetValue("InstallPath").ToString();
             string doomEternalPath = steamPath + @"\steamapps\common\DOOMEternal";
-
             // Check that the DOOM Eternal folder exists.
             if (Directory.Exists(doomEternalPath)) {
                 _console.Output(
