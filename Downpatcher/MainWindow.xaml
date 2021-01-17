@@ -88,7 +88,7 @@
 
         <StackPanel Canvas.Left="590" Canvas.Top="10">
             <TextBlock TextAlignment="Right"><Hyperlink Click="Info_Click">Help</Hyperlink></TextBlock>
-            <TextBlock Name="tbUpdateNotification" Visibility="Hidden" TextAlignment="Right" Padding="0,10,0,0"><Hyperlink Foreground="Red" NavigateUri="https://github.com/mcdalcin/DoomEternalDownpatcher/releases" RequestNavigate="Hyperlink_RequestNavigate">New version detected!</Hyperlink></TextBlock>
+            <TextBlock Name="tbUpdateNotification" Visibility="Hidden" TextAlignment="Right" Padding="0,10,0,0"><Hyperlink Foreground="Red" NavigateUri="https://github.com/mcdalcin/DoomEternalDownpatcher/releases" RequestNavigate="Hyperlink_RequestNavigate">New version available!</Hyperlink></TextBlock>
         </StackPanel>
         <StackPanel Orientation="Horizontal" Canvas.Left="390" Canvas.Top="68">
             <CheckBox Name="cbReportErrors" Checked="CheckBox_CheckedChanged" Unchecked="CheckBox_CheckedChanged"></CheckBox>
