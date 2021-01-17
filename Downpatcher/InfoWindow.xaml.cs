@@ -11,7 +11,8 @@ namespace Downpatcher {
             InitializeComponent();
         }
 
-        private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e) {
+        private void Hyperlink_RequestNavigate(
+            object sender, RequestNavigateEventArgs e) {
             // Open up the hyperlink in a browser.
             ProcessStartInfo processStartInfo = 
                 new ProcessStartInfo(e.Uri.AbsoluteUri);

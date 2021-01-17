@@ -86,8 +86,10 @@
             <fa5:FontAwesome Icon="Regular_Copy"></fa5:FontAwesome>
         </Button>
 
-        <TextBlock Canvas.Left="685" Canvas.Top="10"><Hyperlink Click="Info_Click">Help</Hyperlink></TextBlock>
-
+        <StackPanel Canvas.Left="590" Canvas.Top="10">
+            <TextBlock TextAlignment="Right"><Hyperlink Click="Info_Click">Help</Hyperlink></TextBlock>
+            <TextBlock Name="tbUpdateNotification" Visibility="Hidden" TextAlignment="Right" Padding="0,10,0,0"><Hyperlink Foreground="Red" NavigateUri="https://github.com/mcdalcin/DoomEternalDownpatcher/releases" RequestNavigate="Hyperlink_RequestNavigate">New version detected!</Hyperlink></TextBlock>
+        </StackPanel>
         <StackPanel Orientation="Horizontal" Canvas.Left="390" Canvas.Top="68">
             <CheckBox Name="cbReportErrors" Checked="CheckBox_CheckedChanged" Unchecked="CheckBox_CheckedChanged"></CheckBox>
             <Label Padding="5,1,0,0" Grid.IsSharedSizeScope="True">Automatically Report Errors</Label>

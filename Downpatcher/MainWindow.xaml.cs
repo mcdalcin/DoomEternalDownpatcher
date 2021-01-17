@@ -16,15 +16,10 @@ using System.Windows.Media;
 using System.Windows.Forms;
 using ColorConverter = System.Windows.Media.ColorConverter;
 using Color = System.Windows.Media.Color;
+using System.Windows.Navigation;
 
 namespace Downpatcher {
     public partial class MainWindow : Window {
-        private const string DOOM_ETERNAL_EXE_STRING = "DOOMEternalx64vk.exe";
-        private const string DOOM_ETERNAL_DATA_BASE_URL =
-            "https://raw.githubusercontent.com/mcdalcin/DoomEternalDownpatcher"
-                + "/master/data/";
-        private const string DOOM_ETERNAL_VERSION_URL =
-            DOOM_ETERNAL_DATA_BASE_URL + "versions.json";
         private const string DEPOT_DOWNLOADER_RELEASE_URL =
             "https://api.github.com/repos/SteamRE/DepotDownloader/releases";
         private const string DEPOT_DOWNLOADER_ERROR_STRING = "Error";
@@ -32,6 +27,17 @@ namespace Downpatcher {
             "Please enter your 2 factor auth code from your authenticator app";
         private const string DEPOT_DOWNLOADER_AUTH_CODE_REGEX_STRING =
             "Please enter the authentication code sent to your email address";
+
+        private const string DOOM_ETERNAL_EXE_STRING = "DOOMEternalx64vk.exe";
+        private const string DOOM_ETERNAL_DATA_BASE_URL =
+            "https://raw.githubusercontent.com/mcdalcin/DoomEternalDownpatcher"
+                + "/master/data/";
+        private const string DOOM_ETERNAL_VERSION_URL =
+            DOOM_ETERNAL_DATA_BASE_URL + "versions.json";
+
+        private const string DOWNPATCHER_RELEASE_URL =
+            "https://api.github.com/repos/mcdalcin/DoomEternalDownpatcher/releases";
+
 
         private readonly string _doomEternalPath = "";
         private readonly string _doomEternalDetectedVersion = "";
@@ -50,6 +56,7 @@ namespace Downpatcher {
             InitializeComponent();
             _console = new ConsoleContent(scroller);
             DataContext = _console;
+            CheckForUpdates();
             _doomEternalPath = InitializeDoomRootPath();
             _doomEternalDetectedVersion = InitializeDoomVersion();
             InitializeDoomDownpatchVersions();
@@ -61,6 +68,39 @@ namespace Downpatcher {
             _doomEternalDownpatchFolder = 
                 Directory.GetCurrentDirectory() + @"\DOWNPATCH_FILES";
             lSelectedFolder.Content = new Run(_doomEternalDownpatchFolder);
+        }
+
+        /** Checks for updates to the downpatcher and alerts the user if found. */
+        private void CheckForUpdates() {
+            string jsonString;
+            try {
+                WebClient webClient = new WebClient();
+                jsonString = webClient.DownloadString(DOWNPATCHER_RELEASE_URL);
+            } catch (WebException e) {
+                _console.Output(
+                    "ERROR: Unable to check for Downpatcher updates. Please " +
+                    "make sure there is an active network and this program is " +
+                    "not being blocked by your firewall or antivirus.");
+                return;
+            }
+            dynamic json = JsonConvert.DeserializeObject(jsonString);
+            
+            if (json.Count == 0) {
+                _console.Output(
+                    "ERROR: No releases found for downpatcher while checking " +
+                    "for updates.");
+                return;
+            }
+
+            // Get the version tag of the latest release.
+            string latestVersionTag = json[0].tag_name;
+
+            var latestVersion = new Version(latestVersionTag);
+            var currentVersion = new Version(App.APP_VERSION);
+
+            if (latestVersion.CompareTo(currentVersion) > 0) {
+                tbUpdateNotification.Visibility = Visibility.Visible;
+            }
         }
 
         /** 
@@ -469,6 +509,16 @@ namespace Downpatcher {
                 _depotDownloaderProcess = null;
             }
             UpdateDownpatcherButtons();
+        }
+
+        private void Hyperlink_RequestNavigate(
+            object sender, RequestNavigateEventArgs e) {
+            // Open up the hyperlink in a browser.
+            ProcessStartInfo processStartInfo =
+                new ProcessStartInfo(e.Uri.AbsoluteUri);
+            processStartInfo.UseShellExecute = true;
+            Process.Start(processStartInfo);
+            e.Handled = true;
         }
 
         private void StartDownpatcherButton_Click(object sender, RoutedEventArgs e) {

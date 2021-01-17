@@ -6,9 +6,9 @@ using Settings = Downpatcher.Properties.Settings;
 
 namespace Downpatcher {
     public partial class App : Application {
-        private string APP_VERSION = "doom-eternal-downpatcher@0.3";
+        public static readonly string APP_VERSION = "0.4";
 
-        private string SENTRY_SDK_URL = 
+        private const string SENTRY_SDK_URL = 
             "https://94f9011362c744f7a2f0bbcbec3ddc53@o506270.ingest.sentry.io/" +
             "5595765";
 
@@ -17,7 +17,7 @@ namespace Downpatcher {
             SentrySdk.Init(
                 (options) => {
                     options.Dsn = SENTRY_SDK_URL;
-                    options.Release = APP_VERSION;
+                    options.Release = "doom-eternal-downpatcher@" + APP_VERSION;
                 });
             DispatcherUnhandledException += OnDispatcherUnhandledException;
         }
