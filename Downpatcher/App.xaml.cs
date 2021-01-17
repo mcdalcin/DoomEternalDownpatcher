@@ -2,10 +2,9 @@
 using System.Windows.Threading;
 using Sentry;
 
+using Settings = Downpatcher.Properties.Settings;
+
 namespace Downpatcher {
-    /// <summary>
-    /// Interaction logic for App.xaml
-    /// </summary>
     public partial class App : Application {
         private string APP_VERSION = "doom-eternal-downpatcher@0.3";
 
@@ -17,7 +16,7 @@ namespace Downpatcher {
         public App() : base() {
             SentrySdk.Init(
                 (options) => {
-                    options.Dsn = new Dsn(SENTRY_SDK_URL);
+                    options.Dsn = SENTRY_SDK_URL;
                     options.Release = APP_VERSION;
                 });
             DispatcherUnhandledException += OnDispatcherUnhandledException;
@@ -25,13 +24,17 @@ namespace Downpatcher {
 
         void OnDispatcherUnhandledException(
             object sender, DispatcherUnhandledExceptionEventArgs e) {
-            // TODO(xiae): Add in an option at startup to disable automatic error
-            // reporting.
-            SentrySdk.CaptureException(e.Exception);
-            MessageBox.Show(
-                "An unhandled exception has occurred and automatically been " +
-                "reported. If you are unable to make progress, please request " +
-                "help in the Modern DOOM Speedrunning discord.");
+            string message = 
+                "An unhandled exception has occurred. If you are unable to make " +
+                "progress, please request help in the Modern DOOM Speedrunning " +
+                "discord.";
+            if (Settings.Default.AutomaticallyReportExceptions) {
+                message += " The exception has automatically been reported.";
+                SentrySdk.CaptureException(e.Exception);
+            } else {
+                message += " Your exception is: " + e.Exception.ToString();
+            }
+            MessageBox.Show(message);
             e.Handled = false;
         }
     }

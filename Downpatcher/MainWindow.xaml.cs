@@ -54,6 +54,8 @@ namespace Downpatcher {
             _doomEternalDetectedVersion = InitializeDoomVersion();
             InitializeDoomDownpatchVersions();
             InitializeDepotDownloader();
+            cbReportErrors.IsChecked = 
+                Properties.Settings.Default.AutomaticallyReportExceptions;
 
             // Initialize the default DOOM Eternal downpatch folder.
             _doomEternalDownpatchFolder = 
@@ -194,7 +196,7 @@ namespace Downpatcher {
                         fileName, _depotDownloaderInstallPath);
                     _console.Output("Successfully unpacked DepotDownloader!");
                 }
-                _console.Output(name + " installed.");
+                _console.Output(name + " installed to current directory.");
             }
         }
 
@@ -576,6 +578,12 @@ namespace Downpatcher {
         private void Info_Click(object sender, RoutedEventArgs e) {
             InfoWindow info = new InfoWindow();
             info.Show();
+        }
+
+        private void CheckBox_CheckedChanged(object sender, RoutedEventArgs e) {
+            Properties.Settings.Default.AutomaticallyReportExceptions =
+                cbReportErrors.IsChecked == true;
+            Properties.Settings.Default.Save();
         }
     }
 }
