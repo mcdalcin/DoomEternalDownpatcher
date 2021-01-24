@@ -22,7 +22,6 @@ namespace Downpatcher {
     public partial class MainWindow : Window {
         private const string DEPOT_DOWNLOADER_RELEASE_URL =
             "https://api.github.com/repos/SteamRE/DepotDownloader/releases";
-        private const string DEPOT_DOWNLOADER_ERROR_STRING = "Error";
         private const string DEPOT_DOWNLOADER_AUTH_2FA_REGEX_STRING =
             "Please enter your 2 factor auth code from your authenticator app";
         private const string DEPOT_DOWNLOADER_AUTH_CODE_REGEX_STRING =
@@ -464,14 +463,6 @@ namespace Downpatcher {
             // characters.
             System.Windows.Application.Current.Dispatcher.Invoke(() => 
                 _console.Output("DepotDownloader>> " + output.Replace('\n', '\0')));
-
-            if (output.Contains(DEPOT_DOWNLOADER_ERROR_STRING)) {
-                System.Windows.Application.Current.Dispatcher.Invoke(() => {
-                    _console.Output(
-                        "DepotDownloader has hit an error. Please try again.");
-                    KillDepotDownloaderProcess();
-                });
-            }
 
             bool requiresAuth =
                 output.Contains(DEPOT_DOWNLOADER_AUTH_2FA_REGEX_STRING)
