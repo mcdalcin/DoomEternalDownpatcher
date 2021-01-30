@@ -38,8 +38,8 @@ namespace Downpatcher {
             "https://api.github.com/repos/mcdalcin/DoomEternalDownpatcher/releases";
 
 
-        private readonly string _doomEternalPath = "";
-        private readonly string _doomEternalDetectedVersion = "";
+        private string _doomEternalPath = "";
+        private string _doomEternalDetectedVersion = "";
 
         private volatile string _doomEternalDownpatchFolder = "";
         private volatile string _depotDownloaderInstallPath = "";
@@ -74,6 +74,7 @@ namespace Downpatcher {
             string jsonString;
             try {
                 WebClient webClient = new WebClient();
+                webClient.Headers.Add("User-Agent: Other");
                 jsonString = webClient.DownloadString(DOWNPATCHER_RELEASE_URL);
             } catch (WebException e) {
                 _console.Output(
@@ -117,47 +118,54 @@ namespace Downpatcher {
             string steamPath = localKey.GetValue("InstallPath").ToString();
             string doomEternalPath = steamPath + @"\steamapps\common\DOOMEternal";
             // Check that the DOOM Eternal folder exists.
-            if (Directory.Exists(doomEternalPath)) {
-                _console.Output(
-                    "Successfully found DOOM Eternal installation folder!");
+            return ValidateDoomRootPath(doomEternalPath);
+        }
+
+        private string ValidateDoomRootPath(string path) {
+            // Check that the DOOM Eternal folder exists.
+            tbRootPath.Inlines.Clear();
+            if (Directory.Exists(path)) {
+                _console.Output("Successfully found DOOM Eternal root folder!");
                 tbRootPath.Inlines.Add(new Bold(new Run("Root folder found: ")) {
-                    Foreground = 
+                    Foreground =
                         new SolidColorBrush(
                             (Color)ColorConverter.ConvertFromString("#C7F464"))
                 });
-                tbRootPath.Inlines.Add(new Run(doomEternalPath));
-                return doomEternalPath;
+                tbRootPath.Inlines.Add(new Run(path));
+                return path;
             } else {
                 _console.Output(
-                    "ERROR: Could not find DOOM Eternal installation folder!");
-                tbRootPath.Inlines.Add(
-                    new Bold(new Run("Unable to find DOOM Eternal root folder.")) {
-                        Foreground = Brushes.Firebrick
-                    });
+                    "ERROR: Could not find DOOM Eternal root folder! Please " +
+                    "select it manually.");
+                spRootPath.Visibility = Visibility.Hidden;
+                spSelectDoomFolder.Visibility = Visibility.Visible;
                 return "";
             }
         }
 
         /** 
          * Returns the installed DOOM Eternal version or an empty string if unable to
-         * detect it.
+         * detect it. _doomEternalPath should be set to the DOOM Eternal root path
+         * before calling this function.
          */
         private string InitializeDoomVersion() {
             string doomEternalExePath =
                 _doomEternalPath + @"\" + DOOM_ETERNAL_EXE_STRING;
 
             if (!File.Exists(doomEternalExePath)) {
-                _console.Output("ERROR: DOOM Eternal executable not found.");
-                tbVersion.Inlines.Add(
-                    new Bold(new Run("ERROR: No DOOM Eternal executable detected.") {
-                        Foreground = Brushes.Firebrick
-                    }));
+                _console.Output(
+                    "ERROR: DOOM Eternal executable not found. Please select " +
+                    "your DOOM Eternal root folder containing the DOOM Eternal " +
+                    "executable (DOOMEternalx64vk.exe).");
+                spRootPath.Visibility = Visibility.Hidden;
+                spSelectDoomFolder.Visibility = Visibility.Visible;
                 return "";
             }
 
             long exeSize = new FileInfo(doomEternalExePath).Length;
             string doomVersion = DetermineDoomVersion(exeSize);
 
+            tbVersion.Inlines.Clear();
             if (doomVersion.Length != 0) {
                 _console.Output(
                     "Successfully detected installed DOOM Eternal version: "
@@ -169,13 +177,14 @@ namespace Downpatcher {
                                 (Color)ColorConverter.ConvertFromString("#C7F464"))
                     }));
                 tbVersion.Inlines.Add(new Run(doomVersion));
+                spRootPath.Visibility = Visibility.Visible;
+                spSelectDoomFolder.Visibility = Visibility.Hidden;
             } else {
                 _console.Output(
-                    "ERROR: Unable to detect installed DOOM Eternal version.");
-                tbVersion.Inlines.Add(
-                    new Bold(new Run("Unable to determine DOOM Eternal version.") {
-                        Foreground = Brushes.Firebrick
-                    }));
+                    "ERROR: Unable to detect installed DOOM Eternal version. " +
+                    "Please report this error to the speedrunning discord!");
+                spRootPath.Visibility = Visibility.Visible;
+                spSelectDoomFolder.Visibility = Visibility.Hidden;
                 return "";
             }
             return doomVersion;
@@ -570,6 +579,19 @@ namespace Downpatcher {
                     username,
                     password);
             }).Start();
+        }
+
+        private void SelectDoomFolderButton_Click(object sender, RoutedEventArgs e) {
+            FolderBrowserDialog selectFolderDialog = new FolderBrowserDialog();
+            selectFolderDialog.SelectedPath = Directory.GetCurrentDirectory();
+            if (selectFolderDialog.ShowDialog()
+                    == System.Windows.Forms.DialogResult.OK) {
+                _doomEternalPath = 
+                    ValidateDoomRootPath(selectFolderDialog.SelectedPath);
+                _doomEternalDetectedVersion = InitializeDoomVersion();
+                InitializeDoomDownpatchVersions();
+            }
+            UpdateDownpatcherButtons();
         }
 
         private void SelectFolderButton_Click(object sender, RoutedEventArgs e) {
