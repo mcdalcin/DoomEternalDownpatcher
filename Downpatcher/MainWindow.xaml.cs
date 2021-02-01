@@ -379,8 +379,8 @@ namespace Downpatcher {
             ProcessStartInfo processInfo;
 
             string command =
-                "dotnet.exe " + _depotDownloaderInstallPath
-                + @"\DepotDownloader.dll" 
+                "dotnet.exe \"" + _depotDownloaderInstallPath
+                + "\\DepotDownloader.dll\"" 
                 + " -app 782330"
                 + " -username " + username
                 + " -password " + password
@@ -410,7 +410,9 @@ namespace Downpatcher {
             processInfo.RedirectStandardInput = true;
 
             lock (_depotDownloaderProcessLock) {
-                _depotDownloaderProcess = new Process();
+                // Capture process locally to avoid potential races.
+                Process p = new Process();
+                _depotDownloaderProcess = p;
 
                 System.Windows.Application.Current.Dispatcher.Invoke(
                     () => UpdateDownpatcherButtons());
@@ -428,10 +430,8 @@ namespace Downpatcher {
                     StringBuilder output = new StringBuilder();
                     char character;
 
-                    Process p = _depotDownloaderProcess;
                     try {
                         while (_depotDownloaderProcess != null
-                               && p != null
                                && (character = (char)p.StandardOutput.Read()) >= 0) {
                             // Accumulate buffer until newline or authentication 
                             // interaction prompt.
@@ -471,7 +471,9 @@ namespace Downpatcher {
             // Invoke console output on the UI thread and strip off any stray newline
             // characters.
             System.Windows.Application.Current.Dispatcher.Invoke(() => 
-                _console.Output("DepotDownloader>> " + output.Replace('\n', '\0')));
+                _console.Output(
+                    "DepotDownloader>> " + 
+                    output.Replace('\n', '\0').Replace('\r', '\0')));
 
             bool requiresAuth =
                 output.Contains(DEPOT_DOWNLOADER_AUTH_2FA_REGEX_STRING)
@@ -594,11 +596,17 @@ namespace Downpatcher {
             UpdateDownpatcherButtons();
         }
 
-        private void SelectFolderButton_Click(object sender, RoutedEventArgs e) {
+        private void SelectDownpatcherFolderButton_Click(object sender, RoutedEventArgs e) {
             FolderBrowserDialog selectFolderDialog = new FolderBrowserDialog();
             selectFolderDialog.SelectedPath = Directory.GetCurrentDirectory();
             if (selectFolderDialog.ShowDialog()
                     == System.Windows.Forms.DialogResult.OK) {
+                // Make sure the selected folder is empty.
+                if (Directory.GetFiles(selectFolderDialog.SelectedPath).Length > 0) {
+                    _console.Output(
+                        "ERROR: The selected downpatch folder must be empty.");
+                    return;
+                }
                 _doomEternalDownpatchFolder = selectFolderDialog.SelectedPath;
                 lSelectedFolder.Content = _doomEternalDownpatchFolder;
             }

@@ -59,7 +59,7 @@
             </Label>
             <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
                 <Label x:Name="lSelectedFolder" BorderThickness="1" BorderBrush="LightGray" Background="White" Padding="2,2,2,0"  Content="default downpatch folder" Width="500" />
-                <Button x:Name="bSelectFolder" Click="SelectFolderButton_Click" Content="Select Folder" Padding="2" Margin="5,0,0,0"/>
+                <Button x:Name="bSelectFolder" Click="SelectDownpatcherFolderButton_Click" Content="Select Folder" Padding="2" Margin="5,0,0,0"/>
             </StackPanel>
         </StackPanel>
         <Border BorderThickness="1" BorderBrush="#FF727272" Canvas.Left="10" Canvas.Top="179" Width="700" Height="121">
@@ -93,7 +93,7 @@
         </Button>
 
         <StackPanel Canvas.Left="590" Canvas.Top="10">
-            <TextBlock TextAlignment="Right"><Hyperlink Click="Info_Click">Help</Hyperlink></TextBlock>
+            <TextBlock TextAlignment="Right" FontWeight="Bold"><Hyperlink Click="Info_Click">Help</Hyperlink></TextBlock>
             <TextBlock Name="tbUpdateNotification" Visibility="Hidden" TextAlignment="Right" Padding="0,10,0,0"><Hyperlink Foreground="Red" NavigateUri="https://github.com/mcdalcin/DoomEternalDownpatcher/releases" RequestNavigate="Hyperlink_RequestNavigate">New version available!</Hyperlink></TextBlock>
         </StackPanel>
         <StackPanel Orientation="Horizontal" Canvas.Left="390" Canvas.Top="68">
