@@ -17,6 +17,7 @@ using System.Windows.Forms;
 using ColorConverter = System.Windows.Media.ColorConverter;
 using Color = System.Windows.Media.Color;
 using System.Windows.Navigation;
+using System.Text.RegularExpressions;
 
 namespace Downpatcher {
     public partial class MainWindow : Window {
@@ -363,11 +364,11 @@ namespace Downpatcher {
             string fileListPath,
             string username,
             string password) {
-            
+
             if (depotIds.Length != manifestIds.Length) {
                 _console.Output(
                     "ERROR: Unable to execute depot downloads. Non-matching " +
-                    "number of depots and manifests (" + depotIds.Length + ", " + 
+                    "number of depots and manifests (" + depotIds.Length + ", " +
                     manifestIds.Length + ")");
                 return;
             }
@@ -380,12 +381,9 @@ namespace Downpatcher {
 
             string command =
                 "dotnet.exe \"" + _depotDownloaderInstallPath
-                + "\\DepotDownloader.dll\"" 
+                + "\\DepotDownloader.dll\""
                 + " -app 782330"
-                + " -username " + username
-                + " -password " + password
-                + " -remember-password"
-                + " -max-servers 16"
+                + " -max-servers 60"
                 + " -max-downloads 16"
                 + " -validate"
                 + " -filelist \"" + fileListPath
@@ -400,6 +398,15 @@ namespace Downpatcher {
             foreach (string manifestId in manifestIds) {
                 command += " " + manifestId;
             }
+
+            // Log the command we use before adding the user and password.
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                _console.Output("Attempting to downpatch with command: " + command));
+
+            command +=
+                " -username " + username
+                + " -password " + password
+                + " -remember-password";
 
             processInfo = new ProcessStartInfo("cmd.exe", "/c " + command);
             processInfo.CreateNoWindow = true;
@@ -473,7 +480,7 @@ namespace Downpatcher {
             System.Windows.Application.Current.Dispatcher.Invoke(() => 
                 _console.Output(
                     "DepotDownloader>> " + 
-                    output.Replace('\n', '\0').Replace('\r', '\0')));
+                    output.Replace("\n", "").Replace("\r", "")));
 
             bool requiresAuth =
                 output.Contains(DEPOT_DOWNLOADER_AUTH_2FA_REGEX_STRING)
@@ -555,7 +562,7 @@ namespace Downpatcher {
             string fileListPath = Directory.GetCurrentDirectory() + @"\filelist.txt";
             StreamWriter streamWriter = new StreamWriter(fileListPath, false);
             foreach (string file in aggregatedFiles) {
-                streamWriter.WriteLine(file);
+                streamWriter.WriteLine("regex:" + Regex.Escape(file));
             }
             streamWriter.Flush();
             streamWriter.Close();
@@ -643,7 +650,9 @@ namespace Downpatcher {
         }
 
         private void CopyToClipboardButton_Click(object sender, RoutedEventArgs e) {
-            System.Windows.Forms.Clipboard.SetText(_console.GetDebugString());
+            System.Windows.Clipboard.SetText(
+                _console.GetDebugString(),
+                System.Windows.TextDataFormat.UnicodeText);
         }
 
         private void Info_Click(object sender, RoutedEventArgs e) {
