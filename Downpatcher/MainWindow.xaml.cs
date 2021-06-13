@@ -18,6 +18,7 @@ using ColorConverter = System.Windows.Media.ColorConverter;
 using Color = System.Windows.Media.Color;
 using System.Windows.Navigation;
 using System.Text.RegularExpressions;
+using Newtonsoft.Json.Linq;
 
 namespace Downpatcher {
     public partial class MainWindow : Window {
@@ -38,14 +39,13 @@ namespace Downpatcher {
         private const string DOWNPATCHER_RELEASE_URL =
             "https://api.github.com/repos/mcdalcin/DoomEternalDownpatcher/releases";
 
-
         private string _doomEternalPath = "";
         private string _doomEternalDetectedVersion = "";
 
         private volatile string _doomEternalDownpatchFolder = "";
         private volatile string _depotDownloaderInstallPath = "";
 
-        private DoomVersions _availableVersions = new DoomVersions();
+        private Versions _availableVersions = new Versions();
 
         private ConsoleContent _console;
 
@@ -192,12 +192,11 @@ namespace Downpatcher {
         }
 
         /** 
-         * Ensure the most updated version of DepotDownloader is installed and
-         * ready to use.
+         * Ensure the version of DepotDownloader specified is installed and ready
+         * to use.
          */
         private void InitializeDepotDownloader() {
-            // Check for latest depot downloader release located in current working 
-            // directory.
+            // Look for the depot downloader release matching the specified version.
             using (var webClient = new WebClient()) {
                 webClient.Headers.Add("User-Agent: Other");
                 string jsonString;
@@ -216,9 +215,23 @@ namespace Downpatcher {
                     _console.Output("ERROR: No version of depot downloader found.");
                     return;
                 }
-                string name = json[0].name;
-                string fileName = json[0].assets[0].name;
-                string downloadUrl = json[0].assets[0].browser_download_url;
+                // Look for index of specified depotDownloaderVersion.
+                int ddIndex = -1;
+                for (int i = 0; i < ((JArray)json).Count; i++) {
+                    string version = json[i].name;
+                    if (version.Equals(_availableVersions.depotDownloaderVersion)) {
+                        ddIndex = i;
+                        break;
+                    }
+                }
+                if (ddIndex == -1) {
+                    _console.Output(
+                        "ERROR: Unable to find specified DepotDownloader version: " + _availableVersions.depotDownloaderVersion);
+                    return;
+                }
+                string versionName = json[ddIndex].name;
+                string fileName = json[ddIndex].assets[0].name;
+                string downloadUrl = json[ddIndex].assets[0].browser_download_url;
                 _depotDownloaderInstallPath =
                     Directory.GetCurrentDirectory() + @"\"
                         + Path.GetFileNameWithoutExtension(fileName);
@@ -226,7 +239,7 @@ namespace Downpatcher {
                 // unzip it.
                 if (!Directory.Exists(_depotDownloaderInstallPath)) {
                     _console.Output(
-                        "New DepotDownloader version detected. Installing " + name
+                        "New DepotDownloader version detected. Installing " + versionName
                             + ".");
                     _console.Output("Downloading " + downloadUrl);
                     try {
@@ -239,13 +252,14 @@ namespace Downpatcher {
                             "make sure there is an active network and this " +
                             "program is not being blocked by your firewall or " +
                             "antivirus.");
+                        return;
                     }
                     _console.Output("Unpacking downloaded files.");
                     ZipFile.ExtractToDirectory(
                         fileName, _depotDownloaderInstallPath);
                     _console.Output("Successfully unpacked DepotDownloader!");
                 }
-                _console.Output(name + " installed to current directory.");
+                _console.Output(versionName + " installed to current directory.");
             }
         }
 
@@ -347,7 +361,7 @@ namespace Downpatcher {
                     return "";
                 }
                 _availableVersions =
-                    JsonConvert.DeserializeObject<DoomVersions>(json);
+                    JsonConvert.DeserializeObject<Versions>(json);
                 foreach (var version in _availableVersions.versions) {
                     if (version.size == exeSize) {
                         return version.name;
@@ -536,9 +550,9 @@ namespace Downpatcher {
                 _console.Output("Clearing out downpatch folder.");
                 Directory.Delete(_doomEternalDownpatchFolder, true);
             }
-            DoomVersions.DoomVersion downpatchVersion = null;
-            List<DoomVersions.DoomVersion> intermediateVersions =
-                new List<DoomVersions.DoomVersion>();
+            Versions.DoomVersion downpatchVersion = null;
+            List<Versions.DoomVersion> intermediateVersions =
+                new List<Versions.DoomVersion>();
             foreach (var version in _availableVersions.versions) {
                 // Get all versions in range (downpatchVersion, installedVersion].
                 if (downpatchVersion != null) {

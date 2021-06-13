@@ -6,7 +6,7 @@ using Settings = Downpatcher.Properties.Settings;
 
 namespace Downpatcher {
     public partial class App : Application {
-        public static readonly string APP_VERSION = "1.4";
+        public static readonly string APP_VERSION = "1.5";
 
         private const string SENTRY_SDK_URL = 
             "https://94f9011362c744f7a2f0bbcbec3ddc53@o506270.ingest.sentry.io/" +
