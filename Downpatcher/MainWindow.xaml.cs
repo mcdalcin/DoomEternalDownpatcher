@@ -45,7 +45,7 @@ namespace Downpatcher {
         private volatile string _doomEternalDownpatchFolder = "";
         private volatile string _depotDownloaderInstallPath = "";
 
-        private Versions _availableVersions = new Versions();
+        private Versions _availableVersions;
 
         private ConsoleContent _console;
 
@@ -57,6 +57,7 @@ namespace Downpatcher {
             _console = new ConsoleContent(scroller);
             DataContext = _console;
             CheckForUpdates();
+            _availableVersions = InitializeAvailableVersions();
             _doomEternalPath = InitializeDoomRootPath();
             _doomEternalDetectedVersion = InitializeDoomVersion();
             InitializeDoomDownpatchVersions();
@@ -196,6 +197,12 @@ namespace Downpatcher {
          * to use.
          */
         private void InitializeDepotDownloader() {
+            if (_availableVersions == null) {
+                _console.Output("ERROR: Unable to download DepotDownloader " +
+                    "without versioning metadata. Aborting.");
+                return;
+            }
+            int ddIndex = -1;
             // Look for the depot downloader release matching the specified version.
             using (var webClient = new WebClient()) {
                 webClient.Headers.Add("User-Agent: Other");
@@ -216,7 +223,6 @@ namespace Downpatcher {
                     return;
                 }
                 // Look for index of specified depotDownloaderVersion.
-                int ddIndex = -1;
                 for (int i = 0; i < ((JArray)json).Count; i++) {
                     string version = json[i].name;
                     if (version.Equals(_availableVersions.depotDownloaderVersion)) {
@@ -264,6 +270,13 @@ namespace Downpatcher {
         }
 
         private void InitializeDoomDownpatchVersions() {
+            // Clear any currently set downpatch versions.
+            cbDownpatchVersion.Items.Clear();
+
+            if (_doomEternalDetectedVersion.Equals("")) {
+                return;
+            }
+
             // For now, only include versions less than our current version.
             int count = 0;
             foreach (var version in _availableVersions.versions) {
@@ -347,28 +360,36 @@ namespace Downpatcher {
             }
         }
 
-        private string DetermineDoomVersion(long exeSize) {
+        private Versions InitializeAvailableVersions() {
             using (var webClient = new WebClient()) {
-                string json;
+                string json = "";
                 try {
                     json = webClient.DownloadString(DOOM_ETERNAL_VERSION_URL);
-
                 } catch (WebException e) {
                     _console.Output(
                         "ERROR: Unable to download versioning metadata. Please " +
                         "make sure there is an active network and this program is " +
                         "not being blocked by your firewall or antivirus.");
-                    return "";
+                    return null;
                 }
-                _availableVersions =
-                    JsonConvert.DeserializeObject<Versions>(json);
-                foreach (var version in _availableVersions.versions) {
-                    if (version.size == exeSize) {
-                        return version.name;
-                    }
+                Versions versions = JsonConvert.DeserializeObject<Versions>(json);
+                return versions;
+            }
+        }
+
+        private string DetermineDoomVersion(long exeSize) {
+            if (_availableVersions == null) {
+                _console.Output("ERROR: Cannot determine the installed DOOM version" +
+                    "without versioning metadata. Aborting.");
+            }
+            foreach (var version in _availableVersions.versions) {
+                if (version.size == exeSize) {
+                    return version.name;
                 }
             }
-
+            _console.Output(
+                "ERROR: Unable to determine an installed DOOM Version. Please make" +
+                "sure it is actually installed in the specified folder above.");
             return "";
         }
 

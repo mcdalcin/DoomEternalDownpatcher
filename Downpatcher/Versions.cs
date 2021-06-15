@@ -6,7 +6,7 @@
             public string[] manifestIds;
         }
 
-        public string depotDownloaderVersion;
+        public string depotDownloaderVersion = "";
         public DoomVersion[] versions = new DoomVersion[0];
     }
 }
