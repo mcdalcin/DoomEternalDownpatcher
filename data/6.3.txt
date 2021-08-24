@@ -1,0 +1,6 @@
+DOOMEternalx64vk.exe
+candidate.cfg
+disclayout.cfg
+build-manifest.bin
+candidate.cfg
+disclayout.cfg
