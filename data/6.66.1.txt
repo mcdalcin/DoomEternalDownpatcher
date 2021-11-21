@@ -62,3 +62,5 @@ russian.blang
 simplified_chinese.blang
 spanish.blang
 traditional_chinese.blang
+launcher.cfg
+english.blang
