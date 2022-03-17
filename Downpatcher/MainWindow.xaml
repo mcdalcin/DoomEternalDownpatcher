@@ -77,13 +77,23 @@
                 </ScrollViewer>
             </Grid>
         </Border>
-        <Button Name="bStartDownpatcher" Background="LightGreen" Click="StartDownpatcherButton_Click" Canvas.Left="10" Canvas.Top="144" Padding="5,0" Height="30" IsEnabled="False">Start Downpatcher</Button>
-        <Button Name="bCancelDownpatcher" Background="IndianRed" Click="CancelDownpatcherButton_Click" Canvas.Left="126" Canvas.Top="144" Padding="5,0" Height="30" IsEnabled="False">Cancel Downpatcher</Button>
-        <StackPanel Name="spInProgress" Visibility="Hidden" Orientation="Horizontal" Canvas.Left="252" Canvas.Top="158" Margin="0,1,0,0">
-            <fa5:ImageAwesome Icon="Solid_CircleNotch" Spin="True" Height="12" Width="12" />
-            <TextBlock Margin="5,0,0,0"> In progress...</TextBlock>
+        <StackPanel Orientation="Horizontal" Canvas.Top="144" Canvas.Left="10">
+            <Button Name="bStartDownpatcher" Background="LightGreen" Click="StartDownpatcherButton_Click" Height="30" IsEnabled="False" Margin="0,0,5,0">Start Downpatcher</Button>
+            <Button Name="bCancelDownpatcher" Background="IndianRed" Click="CancelDownpatcherButton_Click" Height="30" IsEnabled="False" Margin="0,0,5,0">Cancel Downpatcher</Button>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Margin="0,0,5,0">
+                <CheckBox Name="cbDownloadAllFiles" Checked="CheckBox_CheckedChanged" Unchecked="CheckBox_CheckedChanged" Margin="0,0,2,0"></CheckBox>
+                <TextBlock VerticalAlignment="Bottom" FontSize="10">Download All Files (warning: slow)</TextBlock>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Height="15" VerticalAlignment="Bottom">
+                <CheckBox Name="cbReportErrors" Checked="CheckBox_CheckedChanged" Unchecked="CheckBox_CheckedChanged" Margin="0,0,2,0"></CheckBox>
+                <TextBlock VerticalAlignment="Bottom" FontSize="10">Automatically Report Errors</TextBlock>
+            </StackPanel>
         </StackPanel>
-        <TextBlock Name="tbRequiredNotification" Foreground="#C44D58" FontWeight="Bold" Canvas.Left="252" Canvas.Top="158">* Required items missing</TextBlock>
+        <StackPanel Name="spInProgress" Visibility="Hidden" Orientation="Horizontal" Canvas.Left="238" Canvas.Top="143" Margin="0,1,0,0">
+            <fa5:ImageAwesome Icon="Solid_CircleNotch" Spin="True" Height="12" Width="12" Margin="0,0,2,0" />
+            <TextBlock> In progress...</TextBlock>
+        </StackPanel>
+        <TextBlock Name="tbRequiredNotification" Foreground="#C44D58" FontWeight="Bold" Canvas.Left="390" Canvas.Top="69">* Required items missing</TextBlock>
         <TextBlock Name="tbUsernameRequired" Foreground="#FF6B6B" FontWeight="Bold" Canvas.Left="236" Canvas.Top="40">*</TextBlock>
         <TextBlock Name="tbPasswordRequired" Foreground="#FF6B6B" FontWeight="Bold" Canvas.Left="358" Canvas.Top="40">*</TextBlock>
         <TextBlock Name="tbVersionRequired" Foreground="#FF6B6B" FontWeight="Bold" Canvas.Left="121" Canvas.Top="40">*</TextBlock>
@@ -95,10 +105,6 @@
         <StackPanel Canvas.Left="590" Canvas.Top="10">
             <TextBlock TextAlignment="Right" FontWeight="Bold"><Hyperlink Click="Info_Click">Help</Hyperlink></TextBlock>
             <TextBlock Name="tbUpdateNotification" Visibility="Hidden" TextAlignment="Right" Padding="0,10,0,0"><Hyperlink Foreground="Red" NavigateUri="https://github.com/mcdalcin/DoomEternalDownpatcher/releases" RequestNavigate="Hyperlink_RequestNavigate">New version available!</Hyperlink></TextBlock>
-        </StackPanel>
-        <StackPanel Orientation="Horizontal" Canvas.Left="390" Canvas.Top="68">
-            <CheckBox Name="cbReportErrors" Checked="CheckBox_CheckedChanged" Unchecked="CheckBox_CheckedChanged"></CheckBox>
-            <Label Padding="5,1,0,0" Grid.IsSharedSizeScope="True">Automatically Report Errors</Label>
         </StackPanel>
     </Canvas>
 </Window>

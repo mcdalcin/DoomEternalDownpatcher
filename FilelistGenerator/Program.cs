@@ -1,6 +1,7 @@
 ﻿using System;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
+using OpenQA.Selenium.Firefox;
 using System.IO;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -38,11 +39,11 @@ namespace FilelistGenerator {
             int numModified = 0;
             int numDeleted = 0;
             List<string> files = new List<string>();
-            ChromeOptions options = new ChromeOptions();
-            ChromeDriverService service = ChromeDriverService.CreateDefaultService();
+            FirefoxOptions options = new FirefoxOptions();
+            FirefoxDriverService service = FirefoxDriverService.CreateDefaultService();
             service.SuppressInitialDiagnosticInformation = true;
             service.HideCommandPromptWindow = true;
-            using (IWebDriver driver = new ChromeDriver(service, options)) {
+            using (IWebDriver driver = new FirefoxDriver(service, options)) {
                 driver.Navigate().GoToUrl(urlString);
 
                 // Wait until page is fully loaded.

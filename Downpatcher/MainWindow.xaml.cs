@@ -64,6 +64,7 @@ namespace Downpatcher {
             InitializeDepotDownloader();
             cbReportErrors.IsChecked = 
                 Properties.Settings.Default.AutomaticallyReportExceptions;
+            cbDownloadAllFiles.IsChecked = Properties.Settings.Default.DownloadAllFiles;
 
             // Initialize the default DOOM Eternal downpatch folder.
             _doomEternalDownpatchFolder = 
@@ -273,14 +274,15 @@ namespace Downpatcher {
             // Clear any currently set downpatch versions.
             cbDownpatchVersion.Items.Clear();
 
-            if (_doomEternalDetectedVersion.Equals("")) {
+            bool downloadAllFilesChecked = cbDownloadAllFiles.IsChecked == true;
+            if (_doomEternalDetectedVersion.Equals("") && !downloadAllFilesChecked) {
                 return;
             }
 
-            // For now, only include versions less than our current version.
+            // Only include versions less than our current version unless downloading all files.
             int count = 0;
             foreach (var version in _availableVersions.versions) {
-                if (_doomEternalDetectedVersion.Equals(version.name)) {
+                if (!downloadAllFilesChecked && _doomEternalDetectedVersion.Equals(version.name)) {
                     break;
                 }
                 cbDownpatchVersion.Items.Add(version.name);
@@ -327,7 +329,7 @@ namespace Downpatcher {
                 cbDownpatchVersion.SelectedItem != null &&
                 tbUsername.Text.Length != 0 &&
                 pbPassword.Password.Length != 0 &&
-                _doomEternalDetectedVersion.Length != 0 &&
+                (cbDownloadAllFiles.IsChecked == true || _doomEternalDetectedVersion.Length != 0) &&
                 _doomEternalDownpatchFolder.Length != 0 &&
                 _depotDownloaderInstallPath.Length != 0 &&
                 _depotDownloaderProcess == null;
@@ -398,7 +400,8 @@ namespace Downpatcher {
             string[] manifestIds,
             string fileListPath,
             string username,
-            string password) {
+            string password,
+            bool downloadAllFiles) {
 
             if (depotIds.Length != manifestIds.Length) {
                 _console.Output(
@@ -411,7 +414,6 @@ namespace Downpatcher {
             // TODO(xiae): Starting up a command prompt to run a dotnet dll from
             // a dotnet app seems like a circular process. Can we do better and call
             // the dotnet dll ourselves?
-
             ProcessStartInfo processInfo;
 
             string command =
@@ -421,8 +423,11 @@ namespace Downpatcher {
                 + " -max-servers 60"
                 + " -max-downloads 16"
                 + " -validate"
-                + " -filelist \"" + fileListPath
-                + "\" -dir \"" + _doomEternalDownpatchFolder + "\"";
+                + " -dir \"" + _doomEternalDownpatchFolder + "\"";
+
+            if (downloadAllFiles) {
+                command += " -filelist \"" + fileListPath + "\"";
+            }
 
             command += " -depot";
             foreach (string depotId in depotIds) {
@@ -542,29 +547,6 @@ namespace Downpatcher {
             }
         }
 
-        /** Must be called from the UI-thread. */
-        private void KillDepotDownloaderProcess() {
-            if (_depotDownloaderProcess != null 
-                && !_depotDownloaderProcess.HasExited) {
-                _depotDownloaderProcess.Kill(true);
-                _depotDownloaderProcess.Close();
-            }
-            lock (_depotDownloaderProcessLock) {
-                _depotDownloaderProcess = null;
-            }
-            UpdateDownpatcherButtons();
-        }
-
-        private void Hyperlink_RequestNavigate(
-            object sender, RequestNavigateEventArgs e) {
-            // Open up the hyperlink in a browser.
-            ProcessStartInfo processStartInfo =
-                new ProcessStartInfo(e.Uri.AbsoluteUri);
-            processStartInfo.UseShellExecute = true;
-            Process.Start(processStartInfo);
-            e.Handled = true;
-        }
-
         private void StartDownpatcherButton_Click(object sender, RoutedEventArgs e) {
             _console.Output("Beginning to downpatch.");
             if (Directory.Exists(_doomEternalDownpatchFolder)) {
@@ -615,13 +597,15 @@ namespace Downpatcher {
             };
 
             // Run DepotDownloader on a new thread to not block the UI-thread. 
+            bool downloadAllFiles = cbDownloadAllFiles.IsChecked == true;
             new Thread(() => {
                 ExecuteDepotDownloads(
                     depotIds,
                     downpatchVersion.manifestIds,
                     fileListPath,
                     username,
-                    password);
+                    password,
+                    downloadAllFiles);
             }).Start();
         }
 
@@ -663,6 +647,29 @@ namespace Downpatcher {
                 + cbDownpatchVersion.SelectedItem.ToString());
         }
 
+        /** Must be called from the UI-thread. */
+        private void KillDepotDownloaderProcess() {
+            if (_depotDownloaderProcess != null
+                && !_depotDownloaderProcess.HasExited) {
+                _depotDownloaderProcess.Kill(true);
+                _depotDownloaderProcess.Close();
+            }
+            lock (_depotDownloaderProcessLock) {
+                _depotDownloaderProcess = null;
+            }
+            UpdateDownpatcherButtons();
+        }
+
+        private void Hyperlink_RequestNavigate(
+            object sender, RequestNavigateEventArgs e) {
+            // Open up the hyperlink in a browser.
+            ProcessStartInfo processStartInfo =
+                new ProcessStartInfo(e.Uri.AbsoluteUri);
+            processStartInfo.UseShellExecute = true;
+            Process.Start(processStartInfo);
+            e.Handled = true;
+        }
+
         private void UsernameTextBox_TextChanged(
             object sender, TextChangedEventArgs e) {
             UpdateDownpatcherButtons();
@@ -696,9 +703,15 @@ namespace Downpatcher {
         }
 
         private void CheckBox_CheckedChanged(object sender, RoutedEventArgs e) {
-            Properties.Settings.Default.AutomaticallyReportExceptions =
+            Properties.Settings.Default.AutomaticallyReportExceptions = 
                 cbReportErrors.IsChecked == true;
+            Properties.Settings.Default.DownloadAllFiles = 
+                cbDownloadAllFiles.IsChecked == true;
             Properties.Settings.Default.Save();
+
+            if (cbDownloadAllFiles.IsChecked == true) {
+                InitializeDoomDownpatchVersions();
+            }
         }
     }
 }
