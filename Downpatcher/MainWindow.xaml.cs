@@ -445,7 +445,7 @@ namespace Downpatcher {
 
             command +=
                 " -username " + username
-                + " -password " + password
+                + " -password \"" + password + "\""
                 + " -remember-password";
 
             processInfo = new ProcessStartInfo("cmd.exe", "/c " + command);
