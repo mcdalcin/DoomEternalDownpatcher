@@ -425,7 +425,7 @@ namespace Downpatcher {
                 + " -validate"
                 + " -dir \"" + _doomEternalDownpatchFolder + "\"";
 
-            if (downloadAllFiles) {
+            if (!downloadAllFiles) {
                 command += " -filelist \"" + fileListPath + "\"";
             }
 
@@ -444,7 +444,7 @@ namespace Downpatcher {
                 _console.Output("Attempting to downpatch with command: " + command));
 
             command +=
-                " -username " + username
+                " -username \"" + username + "\""
                 + " -password \"" + password + "\""
                 + " -remember-password";
 
