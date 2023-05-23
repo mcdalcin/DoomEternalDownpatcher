@@ -1,5 +1,7 @@
-﻿namespace Downpatcher {
-    class Versions {
+﻿using System;
+
+namespace Downpatcher {
+    internal class Versions {
         public class DoomVersion {
             public string name;
             public long size;
@@ -7,6 +9,6 @@
         }
 
         public string depotDownloaderVersion = "";
-        public DoomVersion[] versions = new DoomVersion[0];
+        public DoomVersion[] versions = Array.Empty<DoomVersion>();
     }
 }

@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Linq.Expressions;
 using System.Net;
 using System.Text;
 using System.Threading;
@@ -57,19 +58,26 @@ namespace Downpatcher {
             _console = new ConsoleContent(scroller);
             DataContext = _console;
             CheckForUpdates();
+            InitializeSavedSettings();
             _availableVersions = InitializeAvailableVersions();
             _doomEternalPath = InitializeDoomRootPath();
             _doomEternalDetectedVersion = InitializeDoomVersion();
             InitializeDoomDownpatchVersions();
             InitializeDepotDownloader();
-            cbReportErrors.IsChecked = 
-                Properties.Settings.Default.AutomaticallyReportExceptions;
-            cbDownloadAllFiles.IsChecked = Properties.Settings.Default.DownloadAllFiles;
+            InitializeDownpatchFolder();
+        }
 
+        private void InitializeDownpatchFolder() {
             // Initialize the default DOOM Eternal downpatch folder.
-            _doomEternalDownpatchFolder = 
+            _doomEternalDownpatchFolder =
                 Directory.GetCurrentDirectory() + @"\DOWNPATCH_FILES";
             lSelectedFolder.Content = new Run(_doomEternalDownpatchFolder);
+        }
+
+        private void InitializeSavedSettings() {
+            cbReportErrors.IsChecked =
+                Properties.Settings.Default.AutomaticallyReportExceptions;
+            cbDownloadAllFiles.IsChecked = Properties.Settings.Default.DownloadAllFiles;
         }
 
         /** Checks for updates to the downpatcher and alerts the user if found. */
@@ -79,7 +87,7 @@ namespace Downpatcher {
                 WebClient webClient = new WebClient();
                 webClient.Headers.Add("User-Agent: Other");
                 jsonString = webClient.DownloadString(DOWNPATCHER_RELEASE_URL);
-            } catch (WebException e) {
+            } catch (WebException) {
                 _console.Output(
                     "ERROR: Unable to check for Downpatcher updates. Please " +
                     "make sure there is an active network and this program is " +
@@ -87,7 +95,7 @@ namespace Downpatcher {
                 return;
             }
             dynamic json = JsonConvert.DeserializeObject(jsonString);
-            
+
             if (json.Count == 0) {
                 _console.Output(
                     "ERROR: No releases found for downpatcher while checking " +
@@ -152,8 +160,7 @@ namespace Downpatcher {
          * before calling this function.
          */
         private string InitializeDoomVersion() {
-            string doomEternalExePath =
-                _doomEternalPath + @"\" + DOOM_ETERNAL_EXE_STRING;
+            string doomEternalExePath = _doomEternalPath + @"\" + DOOM_ETERNAL_EXE_STRING;
 
             if (!File.Exists(doomEternalExePath)) {
                 _console.Output(
@@ -205,69 +212,68 @@ namespace Downpatcher {
             }
             int ddIndex = -1;
             // Look for the depot downloader release matching the specified version.
-            using (var webClient = new WebClient()) {
-                webClient.Headers.Add("User-Agent: Other");
-                string jsonString;
-                try {
-                    jsonString =
-                        webClient.DownloadString(DEPOT_DOWNLOADER_RELEASE_URL);
-                } catch (WebException e) {
-                    _console.Output(
-                        "ERROR: Unable to download DepotDownloader metadata. Please " +
-                        "make sure there is an active network and this program is " +
-                        "not being blocked by your firewall or antivirus.");
-                    return;
-                }
-                dynamic json = JsonConvert.DeserializeObject(jsonString);
-                if (json.Count == 0) {
-                    _console.Output("ERROR: No version of depot downloader found.");
-                    return;
-                }
-                // Look for index of specified depotDownloaderVersion.
-                for (int i = 0; i < ((JArray)json).Count; i++) {
-                    string version = json[i].name;
-                    if (version.Equals(_availableVersions.depotDownloaderVersion)) {
-                        ddIndex = i;
-                        break;
-                    }
-                }
-                if (ddIndex == -1) {
-                    _console.Output(
-                        "ERROR: Unable to find specified DepotDownloader version: " + _availableVersions.depotDownloaderVersion);
-                    return;
-                }
-                string versionName = json[ddIndex].name;
-                string fileName = json[ddIndex].assets[0].name;
-                string downloadUrl = json[ddIndex].assets[0].browser_download_url;
-                _depotDownloaderInstallPath =
-                    Directory.GetCurrentDirectory() + @"\"
-                        + Path.GetFileNameWithoutExtension(fileName);
-                // If latest DepotDownloader is not already installed, download and 
-                // unzip it.
-                if (!Directory.Exists(_depotDownloaderInstallPath)) {
-                    _console.Output(
-                        "New DepotDownloader version detected. Installing " + versionName
-                            + ".");
-                    _console.Output("Downloading " + downloadUrl);
-                    try {
-                        webClient.DownloadFile(
-                            downloadUrl,
-                            Directory.GetCurrentDirectory() + @"\" + fileName);
-                    } catch (WebException e) {
-                        _console.Output(
-                            "ERROR: Unable to download DepotDownloader. Please " +
-                            "make sure there is an active network and this " +
-                            "program is not being blocked by your firewall or " +
-                            "antivirus.");
-                        return;
-                    }
-                    _console.Output("Unpacking downloaded files.");
-                    ZipFile.ExtractToDirectory(
-                        fileName, _depotDownloaderInstallPath);
-                    _console.Output("Successfully unpacked DepotDownloader!");
-                }
-                _console.Output(versionName + " installed to current directory.");
+            using var webClient = new WebClient();
+            webClient.Headers.Add("User-Agent: Other");
+            string jsonString;
+            try {
+                jsonString =
+                    webClient.DownloadString(DEPOT_DOWNLOADER_RELEASE_URL);
+            } catch (WebException) {
+                _console.Output(
+                    "ERROR: Unable to download DepotDownloader metadata. Please " +
+                    "make sure there is an active network and this program is " +
+                    "not being blocked by your firewall or antivirus.");
+                return;
             }
+            dynamic json = JsonConvert.DeserializeObject(jsonString);
+            if (json.Count == 0) {
+                _console.Output("ERROR: No version of depot downloader found.");
+                return;
+            }
+            // Look for index of specified depotDownloaderVersion.
+            for (int i = 0; i < ((JArray)json).Count; i++) {
+                string version = json[i].name;
+                if (version.Equals(_availableVersions.depotDownloaderVersion)) {
+                    ddIndex = i;
+                    break;
+                }
+            }
+            if (ddIndex == -1) {
+                _console.Output(
+                    "ERROR: Unable to find specified DepotDownloader version: " + _availableVersions.depotDownloaderVersion);
+                return;
+            }
+            string versionName = json[ddIndex].name;
+            string fileName = json[ddIndex].assets[0].name;
+            string downloadUrl = json[ddIndex].assets[0].browser_download_url;
+            _depotDownloaderInstallPath =
+                Directory.GetCurrentDirectory() + @"\"
+                                                + Path.GetFileNameWithoutExtension(fileName);
+            // If latest DepotDownloader is not already installed, download and 
+            // unzip it.
+            if (!Directory.Exists(_depotDownloaderInstallPath)) {
+                _console.Output(
+                    "New DepotDownloader version detected. Installing " + versionName
+                                                                        + ".");
+                _console.Output("Downloading " + downloadUrl);
+                try {
+                    webClient.DownloadFile(
+                        downloadUrl,
+                        Directory.GetCurrentDirectory() + @"\" + fileName);
+                } catch (WebException) {
+                    _console.Output(
+                        "ERROR: Unable to download DepotDownloader. Please " +
+                        "make sure there is an active network and this " +
+                        "program is not being blocked by your firewall or " +
+                        "antivirus.");
+                    return;
+                }
+                _console.Output("Unpacking downloaded files.");
+                ZipFile.ExtractToDirectory(
+                    fileName, _depotDownloaderInstallPath);
+                _console.Output("Successfully unpacked DepotDownloader!");
+            }
+            _console.Output(versionName + " installed to current directory.");
         }
 
         private void InitializeDoomDownpatchVersions() {
@@ -288,6 +294,10 @@ namespace Downpatcher {
                 cbDownpatchVersion.Items.Add(version.name);
                 count++;
             }
+
+            if (count > 0) {
+                cbDownpatchVersion.SelectedIndex = 0;
+            }
             _console.Output(
                 "There are " + count + " available downpatch versions. Please pick "
                     + "one above.");
@@ -297,9 +307,9 @@ namespace Downpatcher {
             UpdateStartDownpatcherButton();
             UpdateCancelDownpatcherButton();
             UpdateRequiredNotifiers();
-            spInProgress.Visibility = 
-                _depotDownloaderProcess != null 
-                    ? Visibility.Visible 
+            spInProgress.Visibility =
+                _depotDownloaderProcess != null
+                    ? Visibility.Visible
                     : Visibility.Hidden;
         }
 
@@ -343,40 +353,38 @@ namespace Downpatcher {
          * Returns the file list for the specified version in an array of strings. 
          */
         private string[] GetFileList(string versionName) {
-            using (var webClient = new WebClient()) {
-                string files;
-                try {
-                    files = webClient.DownloadString(
-                        DOOM_ETERNAL_DATA_BASE_URL + versionName + ".txt");
-                } catch (WebException e) {
-                    _console.Output(
-                        "ERROR: Unable to download filelist for " + versionName +
-                        ". Please make sure there is an active network and this " +
-                        "program is not being blocked by your firewall or " +
-                        "antivirus.");
-                    return new string[0];
-                }
-                // Split files on each newline.
-                return files.Split(
-                    new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            using var webClient = new WebClient();
+            string files;
+            try {
+                files = webClient.DownloadString(
+                    DOOM_ETERNAL_DATA_BASE_URL + versionName + ".txt");
+            } catch (WebException) {
+                _console.Output(
+                    "ERROR: Unable to download filelist for " + versionName +
+                    ". Please make sure there is an active network and this " +
+                    "program is not being blocked by your firewall or " +
+                    "antivirus.");
+                return new string[0];
             }
+            // Split files on each newline.
+            return files.Split(
+                new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
         }
 
         private Versions InitializeAvailableVersions() {
-            using (var webClient = new WebClient()) {
-                string json = "";
-                try {
-                    json = webClient.DownloadString(DOOM_ETERNAL_VERSION_URL);
-                } catch (WebException e) {
-                    _console.Output(
-                        "ERROR: Unable to download versioning metadata. Please " +
-                        "make sure there is an active network and this program is " +
-                        "not being blocked by your firewall or antivirus.");
-                    return null;
-                }
-                Versions versions = JsonConvert.DeserializeObject<Versions>(json);
-                return versions;
+            using var webClient = new WebClient();
+            string json = "";
+            try {
+                json = webClient.DownloadString(DOOM_ETERNAL_VERSION_URL);
+            } catch (WebException) {
+                _console.Output(
+                    "ERROR: Unable to download versioning metadata. Please " +
+                    "make sure there is an active network and this program is " +
+                    "not being blocked by your firewall or antivirus.");
+                return null;
             }
+            Versions versions = JsonConvert.DeserializeObject<Versions>(json);
+            return versions;
         }
 
         private string DetermineDoomVersion(long exeSize) {
@@ -462,7 +470,7 @@ namespace Downpatcher {
                 _depotDownloaderProcess = p;
 
                 System.Windows.Application.Current.Dispatcher.Invoke(
-                    () => UpdateDownpatcherButtons());
+                    UpdateDownpatcherButtons);
 
                 // Route errors and exit behavior.
                 _depotDownloaderProcess.ErrorDataReceived +=
@@ -473,11 +481,9 @@ namespace Downpatcher {
                 // DepotDownloader may have an interaction prompt for authentication,
                 // therefore we'll need to read in the output ourselves.
                 Thread readStandardOutput = new Thread(() => {
-
                     StringBuilder output = new StringBuilder();
-                    char character;
-
                     try {
+                        char character;
                         while (_depotDownloaderProcess != null
                                && (character = (char)p.StandardOutput.Read()) >= 0) {
                             // Accumulate buffer until newline or authentication 
@@ -494,7 +500,7 @@ namespace Downpatcher {
                                 output.Append(character);
                             }
                         }
-                    } catch (Exception e) {
+                    } catch (Exception) {
                         // Ignore.
                     }
                 });
@@ -508,18 +514,18 @@ namespace Downpatcher {
 
             // Notify the application that the process has ended.
             System.Windows.Application.Current.Dispatcher.Invoke(
-                () => KillDepotDownloaderProcess());
+                KillDepotDownloaderProcess);
         }
 
         private void HandleDepotDownloaderOutput(string output) {
-            if (output == null || output == "") {
+            if (string.IsNullOrEmpty(output)) {
                 return;
             }
             // Invoke console output on the UI thread and strip off any stray newline
             // characters.
-            System.Windows.Application.Current.Dispatcher.Invoke(() => 
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 _console.Output(
-                    "DepotDownloader>> " + 
+                    "DepotDownloader>> " +
                     output.Replace("\n", "").Replace("\r", "")));
 
             bool requiresAuth =
@@ -527,11 +533,11 @@ namespace Downpatcher {
                 || output.Contains(DEPOT_DOWNLOADER_AUTH_CODE_REGEX_STRING);
             if (requiresAuth) {
                 System.Windows.Application.Current.Dispatcher.Invoke(() => {
-                    AuthenticationDialog authenticationDialog = 
+                    AuthenticationDialog authenticationDialog =
                         new AuthenticationDialog();
                     if (authenticationDialog.ShowDialog() == true) {
                         _console.Output(
-                            "Using authentication code: " 
+                            "Using authentication code: "
                                 + authenticationDialog.AuthCode);
 
                         StreamWriter sw = _depotDownloaderProcess.StandardInput;
@@ -551,7 +557,13 @@ namespace Downpatcher {
             _console.Output("Beginning to downpatch.");
             if (Directory.Exists(_doomEternalDownpatchFolder)) {
                 _console.Output("Clearing out downpatch folder.");
-                Directory.Delete(_doomEternalDownpatchFolder, true);
+                try {
+                    Directory.Delete(_doomEternalDownpatchFolder, true);
+                } catch (Exception exception) {
+                    _console.Output("Failed to clear out downpatch folder. Stopping downpatch.");
+                    _console.Output("ERROR: " + exception);
+                    return;
+                }
             }
             Versions.DoomVersion downpatchVersion = null;
             List<Versions.DoomVersion> intermediateVersions =
@@ -577,7 +589,14 @@ namespace Downpatcher {
 
             // Write aggregated file list to output filelist.txt.
             string fileListPath = Directory.GetCurrentDirectory() + @"\filelist.txt";
-            StreamWriter streamWriter = new StreamWriter(fileListPath, false);
+            StreamWriter streamWriter;
+            try {
+                streamWriter = new StreamWriter(fileListPath, false);
+            } catch (Exception exception) {
+                _console.Output(@"Unable to create filelist. This is usually because you are running the downpatcher from a read-only directory (such as C:\WINDOWS\system32). Stopping downpatch.");
+                _console.Output("ERROR: " + exception);
+                return;
+            }
             foreach (string file in aggregatedFiles) {
                 streamWriter.WriteLine("regex:" + Regex.Escape(file));
             }
@@ -614,10 +633,12 @@ namespace Downpatcher {
             selectFolderDialog.SelectedPath = Directory.GetCurrentDirectory();
             if (selectFolderDialog.ShowDialog()
                     == System.Windows.Forms.DialogResult.OK) {
-                _doomEternalPath = 
-                    ValidateDoomRootPath(selectFolderDialog.SelectedPath);
+                _doomEternalPath = ValidateDoomRootPath(selectFolderDialog.SelectedPath);
                 _doomEternalDetectedVersion = InitializeDoomVersion();
                 InitializeDoomDownpatchVersions();
+                if (!ValidateDownpatchFolderPath(_doomEternalDownpatchFolder)) {
+                    InitializeDownpatchFolder();
+                }
             }
             UpdateDownpatcherButtons();
         }
@@ -628,23 +649,33 @@ namespace Downpatcher {
             if (selectFolderDialog.ShowDialog()
                     == System.Windows.Forms.DialogResult.OK) {
                 // Make sure the selected folder is empty.
-                if (Directory.GetFiles(selectFolderDialog.SelectedPath).Length > 0) {
-                    _console.Output(
-                        "ERROR: The selected downpatch folder must be empty.");
+                string selectedPath = selectFolderDialog.SelectedPath;
+                if (!ValidateDownpatchFolderPath(selectedPath)) {
                     return;
                 }
-                _doomEternalDownpatchFolder = selectFolderDialog.SelectedPath;
+                _doomEternalDownpatchFolder = selectedPath;
                 lSelectedFolder.Content = _doomEternalDownpatchFolder;
             }
+
             UpdateDownpatcherButtons();
+        }
+
+        private bool ValidateDownpatchFolderPath(string folderPath) {
+            if (Directory.GetFiles(folderPath).Length > 0) {
+                _console.Output("ERROR: The selected downpatch folder must be empty. Please fix.");
+                return false;
+            }
+            if (folderPath.Equals(_doomEternalPath)) {
+                _console.Output("ERROR: The selected downpatch folder should not be the same as the Doom Eternal folder. Please fix.");
+                return false;
+            }
+            return true;
         }
 
         private void DownpatchVersionComboBox_SelectionChanged(
             object sender, SelectionChangedEventArgs e) {
             UpdateDownpatcherButtons();
-            _console.Output(
-                "Downpatch version set to " 
-                + cbDownpatchVersion.SelectedItem.ToString());
+            _console.Output(cbDownpatchVersion.SelectedItem == null ? "No version selected." : "Downpatch version set to " + cbDownpatchVersion.SelectedItem.ToString() + ".");
         }
 
         /** Must be called from the UI-thread. */
@@ -703,13 +734,14 @@ namespace Downpatcher {
         }
 
         private void CheckBox_CheckedChanged(object sender, RoutedEventArgs e) {
-            Properties.Settings.Default.AutomaticallyReportExceptions = 
+            bool previousDownloadAllFiles = Properties.Settings.Default.DownloadAllFiles;
+            Properties.Settings.Default.AutomaticallyReportExceptions =
                 cbReportErrors.IsChecked == true;
-            Properties.Settings.Default.DownloadAllFiles = 
+            Properties.Settings.Default.DownloadAllFiles =
                 cbDownloadAllFiles.IsChecked == true;
             Properties.Settings.Default.Save();
 
-            if (cbDownloadAllFiles.IsChecked == true) {
+            if (Properties.Settings.Default.DownloadAllFiles != previousDownloadAllFiles) {
                 InitializeDoomDownpatchVersions();
             }
         }
